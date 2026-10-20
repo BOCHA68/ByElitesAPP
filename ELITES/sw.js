@@ -4,9 +4,9 @@
  *   (responden al instante desde la caché y se actualizan por detrás)
  * - Firestore (datos) y cualquier otra API: no se tocan. Los datos offline los maneja
  *   la persistencia propia de Firestore, no este archivo.
- * Cada vez que subas cambios a la app, cambiá VERSION (v5 → v6) para limpiar las cachés viejas.
+ * Cada vez que subas cambios a la app, cambiá VERSION (v6 → v7) para limpiar las cachés viejas.
  */
-const VERSION = 'v5';
+const VERSION = 'v6';
 const PRECACHE = `barras-precache-${VERSION}`;
 const RUNTIME = `barras-runtime-${VERSION}`;
 const SHELL = './index.html';

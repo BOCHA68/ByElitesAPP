@@ -7,7 +7,7 @@
 
 <!-- PWA -->
 <link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#f0b84a">
+<meta name="theme-color" content="#07070d">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black">
@@ -23,10 +23,12 @@
 <style>
 /* Layout: POS de barra nocturna. Barra superior con evento y secciones; botonera grande + ticket al costado (apilado en celular). Tema oscuro único, pensado para barras con poca luz. */
 :root{
-  --bg:#131419; --panel:#1c1e25; --panel2:#24272f; --line:#30333d;
-  --fg:#f2efe8; --muted:#9b9da8; --accent:#f0b84a; --accent-ink:#1b1406;
-  --good:#4cc38a; --bad:#ef6b5b; --warn:#f2a33a;
-  --c-esp:#9a96f0; --c-champ:#f0b84a; --c-cerv:#de8d3e; --c-sin:#5db5d8; --c-otro:#9b9da8;
+  /* Nightclub kiosk: negro azulado profundo, acentos neón sutiles. Violeta = acción, cian = info, oro = marca */
+  --bg:#07070d; --panel:#11111b; --panel2:#191926; --line:#262638;
+  --fg:#f4f2ff; --muted:#9a97b6; --accent:#b46cff; --accent-ink:#0c0614; --accent2:#2fe3ea; --gold:#f6c453;
+  --good:#2ff0a0; --bad:#ff4f7e; --warn:#ffb648; --mp:#00b1ea;
+  --c-esp:#b46cff; --c-champ:#f6c453; --c-cerv:#ff9a42; --c-sin:#2fe3ea; --c-otro:#9a97b6;
+  --glow:0 0 18px color-mix(in srgb,var(--accent) 55%,transparent);
   --f-display:"Barlow Condensed","Arial Narrow",system-ui,sans-serif;
   --f-body:"Barlow",system-ui,-apple-system,"Segoe UI",sans-serif;
   color-scheme:dark;
@@ -151,6 +153,9 @@ td input.wide{width:160px;text-align:left}
 .modal-head h2{margin:0}
 .evbtn{padding:6px 10px;font-size:13px}
 .evlist{display:grid;gap:8px}
+.btn.trash{display:inline-flex;align-items:center;gap:6px;padding:7px 10px}
+.btn.danger-fill{background:var(--bad);border-color:var(--bad);color:#fff}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
 .aviso{margin:14px 0 0;padding-top:12px;border-top:1px solid var(--line);color:var(--muted);font-size:14px}
 .cajbar{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:8px 8px 8px 14px}
 .sechead{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px}
@@ -170,6 +175,79 @@ td input.wide{width:160px;text-align:left}
 .toast{z-index:40!important;position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:10px 16px;border-radius:10px;font-weight:600;z-index:20;max-width:calc(100% - 32px)}
 .toast.err{background:var(--bad);color:#fff}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+
+/* ================= Nightclub kiosk ================= */
+body{background:radial-gradient(1200px 600px at 85% -10%,rgb(180 108 255 / .14),transparent 60%),radial-gradient(900px 500px at -10% 110%,rgb(47 227 234 / .08),transparent 60%),var(--bg);background-attachment:fixed}
+header{background:rgb(7 7 13 / .82);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-bottom-color:rgb(255 255 255 / .06)}
+h1{font-size:26px;letter-spacing:.01em}
+h1 span{background:linear-gradient(90deg,var(--gold),#ff8ad8 60%,var(--accent));-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 0 10px rgb(246 196 83 / .35))}
+nav button[aria-current="page"]{color:#fff;border-color:var(--accent);text-shadow:0 0 12px color-mix(in srgb,var(--accent) 70%,transparent);box-shadow:0 6px 14px -8px var(--accent)}
+.btn{border-radius:12px;transition:transform .08s,box-shadow .15s,background .15s}
+.btn:active{transform:scale(.97)}
+.btn.pri{background:linear-gradient(135deg,var(--accent),#8a4dff);border-color:transparent;color:#fff;box-shadow:var(--glow)}
+.pill.ok{background:rgb(47 240 160 / .12);color:var(--good)} .pill.warn{background:rgb(255 182 72 / .12);color:var(--warn)}
+.card,.kpi,.ticket,.login,.modal,.evrow,.cajbar,.tw{background:linear-gradient(180deg,rgb(255 255 255 / .025),transparent),var(--panel);border-color:rgb(255 255 255 / .07)}
+.kpi b{background:linear-gradient(90deg,#fff,var(--accent2));-webkit-background-clip:text;background-clip:text;color:transparent}
+.bar .tr i{background:linear-gradient(90deg,var(--accent),var(--accent2));box-shadow:0 0 10px var(--accent)}
+input[type=text],input[type=number],input[type=password],input[type=tel],select.f{background:#0d0d16;border-color:var(--line);border-radius:10px}
+input:focus,select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgb(180 108 255 / .22)}
+.cajbar{border-radius:14px}
+.cajbar b{color:var(--accent2)}
+.pill.rol-bartender{background:rgb(47 227 234 / .12);color:var(--accent2)} .pill.rol-cajero{background:rgb(180 108 255 / .14);color:#d6b4ff}
+
+/* Vender: grilla táctil de tarjetas cuadradas */
+.grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
+@media (max-width:520px){.grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}}
+.prod{aspect-ratio:1/1;min-height:0;border-radius:20px;padding:16px 14px 14px;background:radial-gradient(120% 90% at 0% 0%,color-mix(in srgb,var(--cat) 16%,transparent),transparent 60%),var(--panel2);
+  border:1px solid color-mix(in srgb,var(--cat) 30%,var(--line));user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent;transition:transform .07s,box-shadow .15s,border-color .15s}
+.prod::before{inset:0 0 auto 0;width:auto;height:4px;background:var(--cat);box-shadow:0 0 16px var(--cat)}
+.prod:hover{border-color:color-mix(in srgb,var(--cat) 60%,var(--line))}
+.prod:active{transform:scale(.95);background:var(--panel2)}
+.prod.sel{border-color:var(--cat);box-shadow:0 0 0 1px var(--cat),0 0 26px -4px var(--cat)}
+.prod .n{font-size:clamp(19px,2.1vw,25px);line-height:1.02;overflow-wrap:anywhere;hyphens:auto}
+.prod.sel .n{padding-right:38px}
+.prod .p{font-size:17px}
+.prod .q{top:10px;right:10px;min-width:36px;height:36px;font-size:19px;background:var(--cat);color:#0c0614;box-shadow:0 0 16px var(--cat)}
+.prod .stk b{font-size:28px}
+.prod:disabled{opacity:.5}
+.ticket{border-radius:20px;top:118px}
+.total b{font-size:44px;text-shadow:0 0 18px rgb(255 255 255 / .15)}
+.pays{grid-template-columns:1fr;gap:10px}
+.pays button{padding:18px 12px;border-radius:14px;font-size:22px;border:1px solid var(--line);background:var(--panel2);transition:transform .07s,box-shadow .15s}
+.pays button:active{transform:scale(.97)}
+.pays button.cash{background:linear-gradient(135deg,#2ff0a0,#19c98a);border-color:transparent;color:#03140c;box-shadow:0 0 20px -4px var(--good)}
+.pays button.mp{background:linear-gradient(135deg,#21c4ff,var(--mp));border-color:transparent;color:#00131c;box-shadow:0 0 20px -4px var(--mp)}
+.pays button.card{background:linear-gradient(135deg,var(--accent),#8a4dff);border-color:transparent;color:#fff;box-shadow:0 0 20px -4px var(--accent)}
+.pays button:disabled{background:var(--panel2);color:var(--muted);box-shadow:none}
+.tl button{border-radius:10px}
+.mbar{display:none}
+@media (max-width:820px){
+  .mbar{position:fixed;left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom,0px));z-index:15;display:flex;justify-content:space-between;align-items:center;gap:10px;
+    padding:14px 18px;border:0;border-radius:16px;background:linear-gradient(135deg,var(--accent),#8a4dff);color:#fff;font-family:var(--f-display);font-size:20px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;box-shadow:0 10px 30px -6px rgb(180 108 255 / .7)}
+  .mbar b{font-size:24px}
+  main{padding-bottom:80px}
+  .toast{bottom:calc(88px + env(safe-area-inset-bottom,0px))}
+}
+
+/* Comandas (KDS) */
+.comhead{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:16px 0 4px}
+.comhead h2{margin:0}
+.peds{grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px}
+.ped{border-radius:20px;padding:16px;gap:14px;background:linear-gradient(180deg,rgb(47 227 234 / .06),transparent 40%),var(--panel);border:1px solid rgb(47 227 234 / .25)}
+.ped.nuevo{animation:pulso 1.2s ease-in-out 3;border-color:var(--accent2)}
+.ped.late{border-color:rgb(255 182 72 / .55);background:linear-gradient(180deg,rgb(255 182 72 / .08),transparent 40%),var(--panel)}
+@keyframes pulso{50%{box-shadow:0 0 0 2px var(--accent2),0 0 34px -2px var(--accent2)}}
+.ped .phead{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.ped .nro{font-size:56px;color:#fff;text-shadow:0 0 18px var(--accent2)}
+.ped .meta{display:flex;flex-direction:column;align-items:flex-end;text-align:right;font-size:14px;color:var(--muted)}
+.ped .meta b{color:var(--fg);font-size:16px}
+.ped.late .meta span{color:var(--warn);font-weight:600}
+.ped .it{list-style:none;margin:0;padding:0;display:grid;gap:6px;font-size:21px;font-weight:600}
+.ped .it b{color:var(--accent2);margin-right:6px}
+.ped .entregar{padding:20px;border:0;border-radius:16px;font-family:var(--f-display);font-size:26px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:#03140c;
+  background:linear-gradient(135deg,#2ff0a0,#19c98a);box-shadow:0 0 24px -4px var(--good);touch-action:manipulation}
+.ped .entregar:active{transform:scale(.97)}
+@media (prefers-reduced-motion:reduce){.ped.nuevo{animation:none}.prod,.btn,.pays button{transition:none}}
 </style>
 </head>
 <body>
@@ -181,7 +259,7 @@ td input.wide{width:160px;text-align:left}
   </div>
   <nav id="nav">
     <button data-tab="vender">Vender</button>
-    <button data-tab="pedidos">Pedidos</button>
+    <button data-tab="comandas">Comandas</button>
     <button data-tab="stock">Stock</button>
     <button data-tab="cierre">Cierre</button>
     <button data-tab="panel">Panel</button>
@@ -194,7 +272,9 @@ td input.wide{width:160px;text-align:left}
 
 <script>
 const CATS={spirit:{n:'Spirit',c:'var(--c-esp)'},espumante:{n:'Espumante',c:'var(--c-champ)'},cerveza:{n:'Cerveza',c:'var(--c-cerv)'},sin_alcohol:{n:'Sin alcohol',c:'var(--c-sin)'},otro:{n:'Otro',c:'var(--c-otro)'}};
-const PAGOS=[['efectivo','Efectivo','cash'],['qr','QR','qr'],['tarjeta','Tarjeta',''],['transferencia','Transf.','']];
+const PAGOS=[['efectivo','Efectivo','cash'],['mercadopago','Mercado Pago','mp'],['tarjeta','Tarjeta','card']];
+const PAGO_NOMBRE={efectivo:'Efectivo',mercadopago:'Mercado Pago',tarjeta:'Tarjeta',qr:'QR (anterior)',transferencia:'Transferencia (anterior)'};
+const nombrePago=k=>PAGO_NOMBRE[k]||k||'';
 const MOTIVOS=['Rota','Cortesía','Personal','Promo'];
 const TIPOS={compra:'Compra al depósito',carga:'Enviar a barra',devolucion:'Devolver al depósito',baja:'Baja',anulacion:'Eliminación autorizada'};
 
@@ -202,7 +282,7 @@ function ls(k,v){try{if(v===undefined)return localStorage.getItem('bf_'+k);local
 const S={db:null,ready:false,canWrite:true,productos:[],barras:[],eventos:[],config:{},
   part:{},movs:[],cierres:{},tab:ls('tab')||'vender',barra:ls('barra')||'',quien:'',
   ticket:{},last:null,movTipo:'carga',movBarra:'',movQty:{},motivo:'Rota',proveedor:'',
-  cierreBarra:'',conteo:{},efectivo:'',rehacer:false,nuevoEv:'',auth:null,authPin:'',cajSesion:leerCajSesion(),cajLogin:{id:'',barra:'',clave:''},cajEdit:false,cajEd:{},cajNuevo:{nombre:'',clave:''},sesiones:[],evModal:false,editEv:'',editEvNombre:'',borrarEvInfo:null,eventosOk:false,cajeros:[],cajerosOk:false,
+  cierreBarra:'',conteo:{},efectivo:'',rehacer:false,nuevoEv:'',auth:null,authPin:'',cajSesion:leerCajSesion(),cajLogin:{id:'',barra:'',clave:''},cajEdit:false,cajEd:{},cajNuevo:{nombre:'',clave:'',rol:'cajero'},sesiones:[],comBarra:'',vistas:null,evModal:false,editEv:'',editEvNombre:'',borrarEvInfo:null,eventosOk:false,cajeros:[],cajerosOk:false,
   movsDb:[],cola:[],pinIn:'',pinNuevo:'',exportando:false,
   cfgOk:false,sesion:leerSesion(),loginAbierto:false,fallos:0,esperarHasta:0};
 
@@ -210,8 +290,10 @@ const S={db:null,ready:false,canWrite:true,productos:[],barras:[],eventos:[],con
    Cajero (por defecto): la app abre fija en Vender. Sin acceso a otras pestañas ni a la configuración.
    Encargado (con PIN): acceso total a Vender, Pedidos, Stock, Cierre, Panel y Ajustes.
    Mientras no haya PIN de encargado configurado, la app funciona como Encargado para poder hacer la puesta en marcha. */
-const TABS_ROL={encargado:['vender','pedidos','stock','cierre','panel','ajustes'],cajero:['vender']};
-const NOMBRE_ROL={encargado:'Encargado',cajero:'Cajero'};
+const TABS_ROL={encargado:['vender','comandas','stock','cierre','panel','ajustes'],cajero:['vender'],bartender:['comandas']};
+const NOMBRE_ROL={encargado:'Encargado',cajero:'Cajero',bartender:'Bartender'};
+const ROLES_PERSONAL={cajero:'Cajero',bartender:'Bartender'};
+const ACT_BARTENDER=new Set(['entregado','cajSalir','abrirLogin','cerrarLogin','entrar','authCancel']);   /* el bartender solo marca comandas entregadas */
 const ACT_CAJERO=new Set(['add','minus','limpiar','cobrar','entregado','deshacer','abrirLogin','cerrarLogin','entrar','authCancel','cajSalir']);
 function leerCajSesion(){try{return JSON.parse(ls('cajSesion')||'null')}catch(e){return null}}
 function leerSesion(){try{return JSON.parse(ls('sesion')||'null')}catch(e){return null}}
@@ -221,7 +303,9 @@ function rolActual(){
   const ph=pinEnc();
   if(!ph)return 'encargado';                                         /* puesta en marcha: todavía no hay PIN */
   const s=S.sesion;
-  return s&&s.rol==='encargado'&&s.k===ph?'encargado':'cajero';      /* si cambia el PIN, vuelve a Cajero */
+  if(s&&s.rol==='encargado'&&s.k===ph)return 'encargado';           /* si cambia el PIN, vuelve a Cajero */
+  const cs=cajSesionValida();
+  return cs&&cs.rol==='bartender'?'bartender':'cajero';               /* bartender: solo Comandas */
 }
 const permitidas=()=>TABS_ROL[rolActual()];
 const esperandoConfig=()=>S.db&&!S.cfgOk&&!pinEnc();           /* todavía no sabemos si hay PIN */
@@ -308,8 +392,10 @@ async function colaQuitar(id){               /* delete en IndexedDB + espejo en 
   S.cola=S.cola.filter(x=>x.id!==id);
 }
 
-function recomputar(){const ids=new Set(S.movsDb.map(m=>m.id));
-  S.movs=S.movsDb.concat(S.cola.filter(c=>!ids.has(c.id)&&c.data.evento===S.config.evento).map(c=>({id:c.id,...c.data,_cola:true})));sched()}
+function recomputar(){const ids=new Set(S.movsDb.map(m=>m.id)),cola=new Map(S.cola.map(c=>[c.id,c.data]));
+  /* si la venta está en el servidor y también en la cola local, manda lo marcado en el celular (ej: "Entregado" sin señal) */
+  S.movs=S.movsDb.map(m=>{const c=cola.get(m.id);return c&&c.entregado&&!m.entregado?{...m,entregado:true,entregadoPor:c.entregadoPor}:m})
+    .concat(S.cola.filter(c=>!ids.has(c.id)&&c.data.evento===S.config.evento).map(c=>({id:c.id,...c.data,_cola:true})));sched()}
 let subiendo=false,fallas=0;
 async function vaciarCola(){if(subiendo||!S.db||!S.cola.length)return;subiendo=true;
   try{for(const it of await colaLeer()){
@@ -322,7 +408,7 @@ async function vaciarCola(){if(subiendo||!S.db||!S.cola.length)return;subiendo=t
     catch(e){fallas++;if(e&&e.code==='permission-denied')toast('No tenés permiso para guardar ventas. Revisá cómo te compartieron la app.',true);break}}}
   finally{subiendo=false;await colaRefrescar()}}
 setInterval(vaciarCola,8000);addEventListener('online',vaciarCola);
-setInterval(()=>{if(S.tab==='pedidos'||S.tab==='vender')sched()},30000);
+setInterval(()=>{if(S.tab==='comandas'||S.tab==='vender')sched()},20000);
 async function sha(s){const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode('barras:'+s));return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('')}
 
 const $=s=>document.querySelector(s);
@@ -330,7 +416,7 @@ const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 const money=n=>'$ '+Math.round(n||0).toLocaleString('es-AR');
 const pct=n=>isFinite(n)?Math.round(n*100)+'%':'–';
 const slug=s=>String(s).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,40)||('x'+Date.now());
-const prod=id=>S.productos.find(p=>p.id===id)||{id,nombre:id,precio:0,costo:0,categoria:'otro',minimo:0};
+const prod=id=>S.productos.find(p=>p.id===id)||{id,nombre:(S.config.productosBorrados||{})[id]||id,precio:0,costo:0,categoria:'otro',minimo:0,borrado:true};
 const activos=()=>S.productos.filter(p=>p.activo!==false);
 const barraNom=id=>id==='deposito'?'Depósito':(S.barras.find(b=>b.id===id)||{nombre:id}).nombre;
 
@@ -378,9 +464,9 @@ function render(){
   rp.textContent=NOMBRE_ROL[rol];rp.className='pill '+(rol==='encargado'?'ok':'warn');
   rb.textContent=rol==='encargado'?'Salir a Cajero':'Encargado';rb.dataset.act=rol==='encargado'?'salir':'abrirLogin';
   $('.evento').hidden=cargando||rol!=='encargado';
-  if(rol!=='encargado')S.evModal=false;
-  const md=S.ready&&!cargando&&(S.auth||S.evModal);
-  $('#modal').innerHTML=!md?'':S.auth?vAuth():vEventos();document.body.style.overflow=md?'hidden':'';
+  if(rol!=='encargado'){S.evModal=false;S.borrarProd=null}
+  const md=S.ready&&!cargando&&(S.auth||S.borrarProd||S.evModal);
+  $('#modal').innerHTML=!md?'':S.auth?vAuth():S.borrarProd?vBorrarProd():vEventos();document.body.style.overflow=md?'hidden':'';
   if(S.auth){const i=$('#authPin');if(i&&document.activeElement!==i)i.focus()}
   const net=$('#net');const off=!navigator.onLine;
   if(S.cola.length||off){net.hidden=false;net.className='pill '+(off?'bad':'warn');net.textContent=off?`Sin internet${S.cola.length?' · '+S.cola.length+' por subir':''}`:`Subiendo ${S.cola.length} venta${S.cola.length>1?'s':''}…`}else net.hidden=true;
@@ -395,7 +481,7 @@ function render(){
   if(S.db&&S.productos.length&&!S.config.evento&&S.tab!=='ajustes')h+=`<div class="banner">${rol==='encargado'?'Elegí o creá un evento en Ajustes para empezar.':'No hay un evento activo. Pedile al encargado que lo elija.'}</div>`;
   if(S.eventosOk&&S.config.evento&&S.eventos.length&&!S.eventos.some(e=>e.id===S.config.evento))
     h+=`<div class="banner">${rol==='encargado'?'El evento activo ya no existe. Elegí otro en Ajustes → Eventos.':'El evento activo ya no existe. Pedile al encargado que elija otro.'}</div>`;
-  h+=({vender:vVender,pedidos:vPedidos,stock:vStock,cierre:vCierre,panel:vPanel,ajustes:vAjustes}[S.tab]||vVender)();
+  h+=({vender:vVender,comandas:vComandas,stock:vStock,cierre:vCierre,panel:vPanel,ajustes:vAjustes}[S.tab]||vVender)();
   $('#main').innerHTML=h}
 
 /* Selector de barra: un <select> igual al de cajeros, alimentado por las barras de Ajustes */
@@ -423,6 +509,7 @@ function vVender(){
   const cs=cajSesionValida();
   if(!cs)return evTxt+vCajLogin();
   S.quien=cs.nombre;S.barra=cs.barra;
+  if(cs.rol==='bartender')return evTxt+`<div class="cajbar"><span>Bartender <b>${esc(cs.nombre)}</b> · ${esc(barraNom(cs.barra))}</span><button class="btn ghost" data-act="cajSalir">Cerrar sesión</button></div><div class="empty" style="margin-top:14px">Los bartenders no venden: su pantalla es Comandas.</div>`;
   const st=stockAll()[S.barra]||{};
   let h=`${evTxt}<div class="cajbar"><span>Cajero <b>${esc(cs.nombre)}</b> · ${esc(barraNom(cs.barra))}</span><button class="btn ghost" data-act="cajSalir">Cerrar sesión</button></div>`;
   const ps=activos();
@@ -433,16 +520,17 @@ function vVender(){
   for(const p of ps){const s=st[p.id]||0;const q=S.ticket[p.id]||0;const np=!(+p.precio>0);
     const queda=s-q;                                              /* stock después del pedido en curso */
     const cls=(np?'noprice ':'')+(queda<=0?'out':(queda<=(+p.minimo||0)?'low':''));   /* precio y stock se marcan por separado */
-    h+=`<button class="prod ${cls}" style="--cat:${(CATS[p.categoria]||CATS.otro).c}" data-act="add" data-v="${esc(p.id)}" ${S.canWrite&&S.db?'':'disabled'}>
+    h+=`<button class="prod ${cls}${q?' sel':''}" style="--cat:${(CATS[p.categoria]||CATS.otro).c}" data-act="add" data-v="${esc(p.id)}" ${S.canWrite&&S.db?'':'disabled'}>
       ${q?`<span class="q num">${q}</span>`:''}<span class="n">${esc(p.nombre)}</span>
       <span class="pie"><span class="p num">${np?'Sin precio':money(p.precio)}</span>
       <span class="stk num" aria-label="Stock disponible">${q?`<s>${s}</s> → `:''}<b>${Math.max(queda,0)}</b><small>${queda<=0?'sin stock':'en stock'}</small></span></span></button>`}
-  h+=`</div><aside class="ticket" aria-label="Pedido actual"><h3>Pedido</h3>`;
+  h+=`</div><aside class="ticket" id="ticket" aria-label="Pedido actual"><h3>Pedido</h3>`;
   const lines=Object.entries(S.ticket).filter(([,q])=>q>0);
   if(!lines.length)h+=`<p style="color:var(--muted);margin:6px 0 0">Tocá las bebidas para sumarlas.</p>`;
   for(const [id,q] of lines){const p=prod(id);h+=`<div class="tl"><span class="nm">${esc(p.nombre)}</span><button data-act="minus" data-v="${esc(id)}" aria-label="Quitar uno">−</button><span class="num" style="width:24px;text-align:center">${q}</span><button data-act="add" data-v="${esc(id)}" aria-label="Sumar uno">+</button><span class="num" style="width:90px;text-align:right">${money(q*(+p.precio||0))}</span></div>`}
   const tot=lines.reduce((s,[id,q])=>s+q*(+prod(id).precio||0),0);
   h+=`<div class="total"><span class="label">Total</span><b class="num">${money(tot)}</b></div>
+    <div class="label" style="margin-bottom:8px">Cobrar con</div>
     <div class="pays">${PAGOS.map(([k,n,c])=>`<button class="${c}" data-act="cobrar" data-v="${k}" ${lines.length?'':'disabled'}>${n}</button>`).join('')}</div>`;
   if(lines.length)h+=`<button class="btn ghost" data-act="limpiar" style="width:100%;margin-top:8px">Vaciar pedido</button>`;
   if(S.last&&Date.now()-S.last.at<30000)h+=`<div class="undo"><span>Pedido <b>${esc(S.last.numero)}</b> · ${money(S.last.total)} · ${esc(S.last.pago)}</span><button class="btn" data-act="deshacer">Deshacer</button></div>`;
@@ -450,18 +538,41 @@ function vVender(){
   h+=`<h3 style="margin-top:18px">Para entregar${pend.length?` · ${pend.length}`:''}</h3>`;
   if(!pend.length)h+=`<p style="color:var(--muted);margin:0;font-size:14px">Sin pedidos pendientes. Cuando cobrás, el pedido aparece acá hasta que lo marques entregado.</p>`;
   for(const m of pend.slice(0,10))h+=`<div class="tl"><span class="nm"><b>${esc(m.numero||'')}</b> <span style="color:var(--muted)">${hora(m.at)}</span><br><span style="font-size:14px">${(m.lineas||[]).map(x=>esc(x.q+' '+prod(x.p).nombre)).join(', ')}</span></span><button class="btn" style="width:auto;height:auto;padding:8px 10px" data-act="entregado" data-v="${esc(m.id)}">Entregado</button></div>`;
-  h+=`</aside></div>`;return h}
+  h+=`</aside></div>`;
+  /* celular: barra fija con el total para llegar al cobro sin buscarlo */
+  if(lines.length)h+=`<button type="button" class="mbar" onclick="document.getElementById('ticket').scrollIntoView({behavior:'smooth',block:'start'})"><span>${lines.reduce((a,[,q])=>a+q,0)} ítems</span><b class="num">${money(tot)}</b><span>Cobrar ↓</span></button>`;
+  return h}
 
-function vPedidos(){
+/* ---------- Comandas (KDS) ----------
+   Cada venta cobrada aparece acá en tiempo real como tarjeta. El bartender toca "Entregado" y desaparece.
+   Bartender: ve solo su barra. Encargado: elige la barra o mira todas. */
+let audioCtx=null;
+function desbloquearAudio(){try{audioCtx=audioCtx||new (window.AudioContext||window.webkitAudioContext)();audioCtx.resume()}catch(e){}}
+function avisoComanda(){
+  try{navigator.vibrate&&navigator.vibrate([120,60,120])}catch(e){}
+  try{if(!audioCtx)return;const o=audioCtx.createOscillator(),g=audioCtx.createGain();o.type='sine';o.frequency.value=880;
+    g.gain.setValueAtTime(.0001,audioCtx.currentTime);g.gain.exponentialRampToValueAtTime(.25,audioCtx.currentTime+.02);g.gain.exponentialRampToValueAtTime(.0001,audioCtx.currentTime+.35);
+    o.connect(g).connect(audioCtx.destination);o.start();o.stop(audioCtx.currentTime+.4)}catch(e){}}
+function vComandas(){
   if(!S.barras.length)return `<div class="empty">Todavía no hay barras.</div>`;
-  let h=`<label for="barraSel" style="display:block;max-width:320px"><div class="label">Mostrar pedidos de</div>${selBarra('barraSel',S.barra)}</label>`;
-  if(!S.barra)return h+`<div class="empty" style="margin-top:14px">Elegí qué lado muestra esta pantalla.</div>`;
-  const pend=S.movs.filter(m=>m.tipo==='venta'&&m.barra===S.barra&&m.entregado===false).sort((a,b)=>(a.at||0)-(b.at||0));
-  if(!pend.length)return h+`<div class="empty" style="margin-top:14px">No hay pedidos para preparar. Cuando un cajero cobra, el pedido aparece acá con su número.</div>`;
+  const rol=rolActual();let h='',barra;
+  if(rol==='bartender'){const cs=cajSesionValida();barra=cs.barra;S.quien=cs.nombre;
+    h+=`<div class="cajbar"><span>Bartender <b>${esc(cs.nombre)}</b> · ${esc(barraNom(barra))}</span><button class="btn ghost" data-act="cajSalir">Cerrar sesión</button></div>`}
+  else{barra=S.comBarra||'';
+    h+=`<label for="comBarraSel" style="display:block;max-width:320px"><div class="label">Comandas de</div><select class="f" id="comBarraSel" style="width:100%"><option value="">Todas las barras</option>${S.barras.map(b=>`<option value="${esc(b.id)}"${b.id===barra?' selected':''}>${esc(b.nombre)}</option>`).join('')}</select></label>`}
+  const pend=S.movs.filter(m=>m.tipo==='venta'&&m.entregado===false&&(!barra||m.barra===barra)).sort((a,b)=>(a.at||0)-(b.at||0));
+  /* aviso (vibración + sonido) cuando entra una comanda nueva */
+  const ids=new Set(pend.map(m=>m.id));
+  if(S.vistas&&rol==='bartender'&&pend.some(m=>!S.vistas.has(m.id)))avisoComanda();
+  S.vistas=ids;
+  h+=`<div class="comhead"><h2>Comandas</h2><span class="pill ${pend.length?'warn':'ok'}">${pend.length?pend.length+' por preparar':'Todo entregado'}</span></div>`;
+  if(!pend.length)return h+`<div class="empty">No hay comandas pendientes. Cuando un cajero cobra, el pedido aparece acá al instante.</div>`;
   h+=`<div class="peds">`;
-  for(const m of pend){const min=Math.floor((Date.now()-(m.at||Date.now()))/60000);
-    h+=`<div class="ped${min>=5?' late':''}"><div class="nro">${esc(m.numero||'')}</div><div class="it">${(m.lineas||[]).map(x=>`${x.q} × ${esc(prod(x.p).nombre)}`).join('<br>')}</div>
-      <div class="t">${min<1?'Recién cobrado':'Hace '+min+' min'}${m.quien?' · '+esc(m.quien):''}</div><button data-act="entregado" data-v="${esc(m.id)}">Entregado</button></div>`}
+  for(const m of pend){const seg=Math.floor((Date.now()-(m.at||Date.now()))/1000),min=Math.floor(seg/60);
+    h+=`<article class="ped${min>=5?' late':''}${seg<20?' nuevo':''}" aria-label="Comanda ${esc(m.numero||'')}">
+      <div class="phead"><div class="nro num">${esc(m.numero||'')}</div><div class="meta"><b>${esc(m.quien||'')}</b><span>${barra?'':esc(barraNom(m.barra))+' · '}${min<1?'recién':min+' min'}</span></div></div>
+      <ul class="it">${(m.lineas||[]).map(x=>`<li><b class="num">${x.q}×</b> ${esc(prod(x.p).nombre)}</li>`).join('')}</ul>
+      <button class="entregar" data-act="entregado" data-v="${esc(m.id)}">Entregado</button></article>`}
   return h+`</div>`}
 
 function vStock(){
@@ -542,7 +653,7 @@ function vPanel(){
   if(sinCosto)h+=`<div class="banner" style="margin-top:12px">Hay productos sin costo cargado: la ganancia sale más alta de lo real. Completalos en Ajustes.</div>`;
   const maxB=Math.max(...Object.values(porB).map(x=>x.f),1),maxP=Math.max(...Object.values(porPago),1);
   h+=`<div class="cols" style="margin-top:16px"><div class="card"><h3>Por barra</h3><div class="bars">${S.barras.map(b=>{const x=porB[b.id]||{f:0,n:0};return `<div class="bar"><span>${esc(b.nombre)}</span><span class="tr"><i style="width:${x.f/maxB*100}%"></i></span><span class="num">${money(x.f)} · ${x.n}</span></div>`}).join('')}</div></div>
-   <div class="card"><h3>Medios de pago</h3><div class="bars">${PAGOS.map(([k,n])=>`<div class="bar"><span>${n}</span><span class="tr"><i style="width:${(porPago[k]||0)/maxP*100}%"></i></span><span class="num">${money(porPago[k]||0)} · ${pct((porPago[k]||0)/fact)}</span></div>`).join('')}</div></div></div>`;
+   <div class="card"><h3>Medios de pago</h3><div class="bars">${[...new Set([...PAGOS.map(x=>x[0]),...Object.keys(porPago)])].map(k=>[k,nombrePago(k)]).map(([k,n])=>`<div class="bar"><span>${n}</span><span class="tr"><i style="width:${(porPago[k]||0)/maxP*100}%"></i></span><span class="num">${money(porPago[k]||0)} · ${pct((porPago[k]||0)/fact)}</span></div>`).join('')}</div></div></div>`;
   const rk=Object.entries(porP).sort((a,b)=>(b[1].f-b[1].c)-(a[1].f-a[1].c));
   h+=`<section><h2>Productos</h2><div class="tw"><table><thead><tr><th>Producto</th><th>Unidades</th><th>Facturación</th><th>Ganancia</th><th>Margen</th></tr></thead><tbody>${rk.map(([id,x])=>`<tr><td><span class="dot" style="--cat:${(CATS[prod(id).categoria]||CATS.otro).c}"></span>${esc(prod(id).nombre)}</td><td>${x.u}</td><td>${money(x.f)}</td><td>${money(x.f-x.c)}</td><td>${pct((x.f-x.c)/x.f)}</td></tr>`).join('')}</tbody></table></div></section>`;
   const st=stockAll();const crit=[];
@@ -578,6 +689,16 @@ function vEventos(){
    <div class="row" style="margin-top:12px"><input type="text" id="nuevoEv" value="${esc(S.nuevoEv)}" placeholder="Nombre del evento nuevo" maxlength="40" style="flex:1 1 200px"><button class="btn" data-act="crearEv" ${dis}>Crear evento</button></div>
   </div>`}
 
+/* Confirmación rápida para borrar un producto del catálogo */
+function vBorrarProd(){const b=S.borrarProd;
+  return `<div class="modal-bg" data-act="cancelarBorrarProd"></div>
+  <div class="modal" role="alertdialog" aria-modal="true" aria-labelledby="bpTit" style="max-width:420px">
+   <div class="modal-head"><h2 id="bpTit">Borrar producto</h2></div>
+   <p style="margin:0 0 6px;font-size:17px">¿Seguro que querés borrar <b>${esc(b.nombre)}</b>?</p>
+   <p style="margin:0 0 16px;color:var(--muted);font-size:14px">Se elimina de la base de datos y de todas las barras.${b.enBarras?` Todavía ${b.enBarras===1?'figura':'figuran'} <b style="color:var(--warn)">${b.enBarras} ${b.enBarras===1?'unidad':'unidades'}</b> en stock.`:''}${b.vendidas?` ${b.vendidas===1?'La unidad vendida':`Las ${b.vendidas} unidades vendidas`} en este evento ${b.vendidas===1?'sigue':'siguen'} contando en el Panel y el Excel.`:''} Si solo querés sacarlo de la venta, destildá “Activo”.</p>
+   <div class="row"><button class="btn danger-fill" data-act="confirmarBorrarProd" style="flex:1">Sí, borrar</button><button class="btn ghost" data-act="cancelarBorrarProd">Cancelar</button></div>
+  </div>`}
+
 function vAjustes(){
   const dis=S.canWrite&&S.db?'':'disabled';
   let h='';
@@ -588,13 +709,15 @@ function vAjustes(){
    <div class="row"><span>Activo: <b style="color:var(--accent)">${evAct?esc(evAct.nombre):'ninguno'}</b> · ${S.eventos.length} evento${S.eventos.length===1?'':'s'}</span>
    <button class="btn pri" data-act="abrirEventos" ${dis}>Gestionar eventos</button></div></section>`;
   h+=`<section><h2>Productos y precios</h2><p style="color:var(--muted);margin-top:-4px">Los cambios se guardan solos y llegan a todas las barras al instante. El costo sirve para calcular la ganancia; el bartender no lo ve.</p>
-   <div class="tw"><table><thead><tr><th>Producto</th><th>Tipo</th><th>Precio venta ($)</th><th>Costo ($)</th><th>Mínimo</th><th>Activo</th></tr></thead><tbody>
+   <div class="tw"><table><thead><tr><th>Producto</th><th>Tipo</th><th>Precio venta ($)</th><th>Costo ($)</th><th>Mínimo</th><th>Activo</th><th><span class="sr">Borrar</span></th></tr></thead><tbody>
    ${S.productos.map(p=>`<tr><td><input class="wide" type="text" id="pn-${esc(p.id)}" data-pf="nombre" data-pid="${esc(p.id)}" value="${esc(p.nombre)}" ${dis}></td>
      <td><select class="f" id="pc-${esc(p.id)}" data-pf="categoria" data-pid="${esc(p.id)}" ${dis}>${Object.entries(CATS).map(([k,c])=>`<option value="${k}"${k===p.categoria?' selected':''}>${c.n}</option>`).join('')}</select></td>
      <td><input type="number" min="0" step="100" id="pp-${esc(p.id)}" data-pf="precio" data-pid="${esc(p.id)}" value="${+p.precio||''}" placeholder="0" ${dis}></td>
      <td><input type="number" min="0" step="100" id="pk-${esc(p.id)}" data-pf="costo" data-pid="${esc(p.id)}" value="${+p.costo||''}" placeholder="0" ${dis}></td>
      <td><input type="number" min="0" step="1" id="pm-${esc(p.id)}" data-pf="minimo" data-pid="${esc(p.id)}" value="${+p.minimo||0}" style="width:70px" ${dis}></td>
-     <td style="text-align:center"><input type="checkbox" id="pa-${esc(p.id)}" data-pf="activo" data-pid="${esc(p.id)}" ${p.activo!==false?'checked':''} ${dis} aria-label="Activo"></td></tr>`).join('')}
+     <td style="text-align:center"><input type="checkbox" id="pa-${esc(p.id)}" data-pf="activo" data-pid="${esc(p.id)}" ${p.activo!==false?'checked':''} ${dis} aria-label="Activo"></td>
+     <td><button class="btn ghost danger trash" data-act="borrarProd" data-v="${esc(p.id)}" ${dis} aria-label="Borrar ${esc(p.nombre)}" title="Borrar producto">
+       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg>Borrar</button></td></tr>`).join('')}
    </tbody></table></div><div class="row" style="margin-top:10px"><button class="btn" data-act="nuevoProd" ${dis}>Agregar producto</button></div></section>`;
   h+=`<section><h2>Acceso</h2>
    <p style="color:var(--muted);margin-top:-4px">Hay dos perfiles. <b>Cajero</b>: la app abre así por defecto, fija en Vender. <b>Encargado</b>: con este PIN, acceso total.</p>
@@ -609,19 +732,21 @@ function vAjustes(){
    <button class="btn" data-act="probarAlerta" ${dis}>Enviar alerta de prueba</button></div></section>`;
   /* Cajeros: tabla Nombre / Clave de acceso. El lápiz pasa a modo edición (agregar, editar, eliminar). */
   const ed=S.cajEdit;
-  h+=`<section><div class="sechead"><h2>Cajeros</h2><button class="btn ghost icon${ed?' on':''}" data-act="cajEditar" aria-pressed="${ed}" aria-label="${ed?'Terminar de editar cajeros':'Editar cajeros'}" title="${ed?'Listo':'Editar'}" ${dis}>
+  h+=`<section><div class="sechead"><h2>Personal</h2><button class="btn ghost icon${ed?' on':''}" data-act="cajEditar" aria-pressed="${ed}" aria-label="${ed?'Terminar de editar personal':'Editar personal'}" title="${ed?'Listo':'Editar'}" ${dis}>
      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button></div>
-   <p style="color:var(--muted);margin-top:-4px">Cada cajero entra a Vender con su nombre, su barra y su clave. La clave se guarda cifrada: si alguien la olvida, poné una nueva.</p>
-   ${S.cajeros.length||ed?`<div class="tw"><table class="cajtab"><thead><tr><th>Nombre</th><th>Clave de acceso</th>${ed?'<th></th>':'<th>Pedidos</th>'}</tr></thead><tbody>
+   <p style="color:var(--muted);margin-top:-4px"><b>Cajeros</b> entran a Vender y <b>bartenders</b> a Comandas, con su nombre, su barra y su clave. La clave se guarda cifrada: si alguien la olvida, poné una nueva.</p>
+   ${S.cajeros.length||ed?`<div class="tw"><table class="cajtab"><thead><tr><th>Nombre</th><th>Rol</th><th>Clave de acceso</th>${ed?'<th></th>':'<th>Pedidos</th>'}</tr></thead><tbody>
    ${S.cajeros.map(c=>{const e=S.cajEd[c.id]||{};return ed
      ?`<tr><td><input type="text" id="cn-${esc(c.id)}" data-cn="${esc(c.id)}" value="${esc(e.nombre??c.nombre)}" maxlength="30" aria-label="Nombre"></td>
+        <td><select class="f" id="cr-${esc(c.id)}" data-cr="${esc(c.id)}" aria-label="Rol">${Object.entries(ROLES_PERSONAL).map(([k,n])=>`<option value="${k}"${(e.rol??c.rol??'cajero')===k?' selected':''}>${n}</option>`).join('')}</select></td>
         <td><input type="password" inputmode="numeric" id="ck-${esc(c.id)}" data-ck="${esc(c.id)}" value="${esc(e.clave||'')}" maxlength="8" placeholder="${c.claveHash?'Nueva clave (vacío = igual)':'Sin clave: cargá una'}" aria-label="Clave de acceso"></td>
         <td><span class="evacts"><button class="btn" data-act="cajGuardar" data-v="${esc(c.id)}">Guardar</button><button class="btn ghost danger" data-act="borrarCajero" data-v="${esc(c.id)}">Eliminar</button></span></td></tr>`
-     :`<tr><td>${esc(c.nombre)}</td><td style="text-align:left">${c.claveHash?'<span class="pill ok">•••• configurada</span>':'<span class="pill warn">Sin clave</span>'}</td><td style="text-align:left"><span class="pill">${esc(c.codigo||'')}-</span></td></tr>`}).join('')}
-   ${ed?`<tr class="nuevo"><td><input type="text" id="nuevoCajNombre" value="${esc(S.cajNuevo.nombre)}" maxlength="30" placeholder="Nombre del cajero nuevo"></td>
+     :`<tr><td>${esc(c.nombre)}</td><td><span class="pill rol-${c.rol||'cajero'}">${ROLES_PERSONAL[c.rol||'cajero']}</span></td><td style="text-align:left">${c.claveHash?'<span class="pill ok">•••• configurada</span>':'<span class="pill warn">Sin clave</span>'}</td><td style="text-align:left"><span class="pill">${esc(c.codigo||'')}-</span></td></tr>`}).join('')}
+   ${ed?`<tr class="nuevo"><td><input type="text" id="nuevoCajNombre" value="${esc(S.cajNuevo.nombre)}" maxlength="30" placeholder="Nombre"></td>
+        <td><select class="f" id="nuevoCajRol" aria-label="Rol">${Object.entries(ROLES_PERSONAL).map(([k,n])=>`<option value="${k}"${S.cajNuevo.rol===k?' selected':''}>${n}</option>`).join('')}</select></td>
         <td><input type="password" inputmode="numeric" id="nuevoCajClave" value="${esc(S.cajNuevo.clave)}" maxlength="8" placeholder="Clave (4 a 8 números)"></td>
         <td><button class="btn pri" data-act="agregarCajero">Agregar</button></td></tr>`:''}
-   </tbody></table></div>`:`<div class="empty">Todavía no hay cajeros. Tocá el lápiz para agregar el primero.</div>`}</section>`;
+   </tbody></table></div>`:`<div class="empty">Todavía no hay cajeros ni bartenders. Tocá el lápiz para agregar el primero.</div>`}</section>`;
   h+=`<section><h2>Barras</h2><div class="qtylist">${S.barras.map(b=>`<label class="qi"><input type="text" id="bn-${esc(b.id)}" data-bid="${esc(b.id)}" value="${esc(b.nombre)}" style="flex:1;width:auto" ${dis}></label>`).join('')}</div>
    <div class="row" style="margin-top:10px"><button class="btn" data-act="nuevaBarra" ${dis}>Agregar barra</button></div></section>`;
   return h}
@@ -653,7 +778,7 @@ const ACT={
     const data={evento:evId(),tipo:'venta',barra:S.barra,lineas,total,pago:v,numero,entregado:false,quien:caj.nombre,cajeroId:caj.id,at:Date.now()};
     const item={id,data};
     /* Vaciamos el pedido antes del await para que un doble toque no cobre dos veces */
-    S.last={id,at:Date.now(),total,numero,pago:PAGOS.find(x=>x[0]===v)[1]};S.ticket={};
+    S.last={id,at:Date.now(),total,numero,pago:nombrePago(v)};S.ticket={};
     if(idbOk){
       try{await colaPut(item);await colaRefrescar()}
       catch(e){idbOk=false;S.cola=[...S.cola.filter(x=>x.id!==id),item];recomputar()}  /* fallback: cola en memoria */
@@ -661,8 +786,12 @@ const ACT={
     render();setTimeout(sched,30500);
     vaciarCola()},
   entregado:async v=>{const c=await colaLeer();const it=c.find(x=>x.id===v);
-    if(it){await colaGuardar({id:it.id,data:{...it.data,entregado:true,entregadoAt:Date.now()}});await colaRefrescar();return}
-    await w(()=>S.db.doc('movs/'+v).update({entregado:true,entregadoAt:Date.now()}))},
+    const por=S.quien||(rolActual()==='encargado'?'Encargado':'');
+    if(it){await colaGuardar({id:it.id,data:{...it.data,entregado:true,entregadoAt:Date.now(),entregadoPor:por}});await colaRefrescar();
+      S.db.doc('movs/'+v).update({entregado:true,entregadoAt:Date.now(),entregadoPor:por}).catch(()=>{});   /* si ya estaba en Firestore, también */
+      return}
+    S.movsDb=S.movsDb.map(m=>m.id===v?{...m,entregado:true}:m);recomputar();     /* desaparece al instante */
+    w(()=>S.db.doc('movs/'+v).update({entregado:true,entregadoAt:Date.now(),entregadoPor:por}))},
   deshacer:()=>{const l=S.last;if(!l)return;
     pedirAutorizacion(`Anular la venta ${l.numero} (${money(l.total)})`,S.barra,()=>anularVenta(l))},
   abrirLogin:()=>{S.loginAbierto=true;S.pinIn='';window.scrollTo(0,0)},
@@ -709,6 +838,19 @@ const ACT={
     const det=`Anular ${(TIPOS[m.tipo]||m.tipo).toLowerCase()}: ${(m.lineas||[]).map(x=>x.q+' '+prod(x.p).nombre).join(', ')}`;
     pedirAutorizacion(det,m.barra||'deposito',()=>w(()=>S.db.doc('movs/'+v).delete(),'Movimiento anulado'))},
   authCancel:()=>{S.auth=null;S.authPin='';toast('Eliminación cancelada')},
+  borrarProd:v=>{const p=S.productos.find(x=>x.id===v);if(!p)return;
+    const enBarras=Object.entries(stockAll()).reduce((t,[,st])=>t+Math.max(0,st[v]||0),0);
+    const vendidas=S.movs.filter(m=>m.tipo==='venta').reduce((t,m)=>t+(m.lineas||[]).filter(x=>x.p===v).reduce((a,x)=>a+x.q,0),0);
+    S.borrarProd={id:v,nombre:p.nombre,enBarras,vendidas}},
+  cancelarBorrarProd:()=>{S.borrarProd=null},
+  confirmarBorrarProd:()=>{const b=S.borrarProd;if(!b)return;S.borrarProd=null;
+    /* se guarda solo el nombre para que las ventas viejas lo sigan mostrando en Panel y Excel */
+    const borrados={...(S.config.productosBorrados||{}),[b.id]:b.nombre};
+    S.config={...S.config,productosBorrados:borrados};
+    S.productos=S.productos.filter(p=>p.id!==b.id);delete S.ticket[b.id];
+    toast('Producto borrado: '+b.nombre);
+    w(()=>S.db.doc('config/main').set({productosBorrados:borrados},{merge:true}));
+    w(()=>S.db.doc('productos/'+b.id).delete())},
   cierreBarra:v=>{S.cierreBarra=v;S.conteo={};S.efectivo='';S.rehacer=false},
   cerrar:async()=>{const b=S.cierreBarra;const conteo={};Object.entries(S.conteo).forEach(([p,q])=>{const n=Math.floor(+q||0);if(n>0)conteo[p]=n});
     await w(()=>S.db.doc(`cierres/${evId()}_${b}`).set({evento:evId(),barra:b,conteo,efectivo:+S.efectivo||0,quien:autor(),at:Date.now(),devuelto:false}),'Barra cerrada');S.rehacer=false},
@@ -746,22 +888,24 @@ const ACT={
     for(let i=0;i<refs.length;i+=400){const b=S.db.batch();refs.slice(i,i+400).forEach(r=>b.delete(r));w(()=>b.commit())}
     toast('Evento eliminado: '+e.nombre)},
   nuevoProd:async()=>{const id='p'+Date.now().toString(36);await w(()=>S.db.doc('productos/'+id).set({nombre:'Producto nuevo',categoria:'otro',precio:0,costo:0,minimo:0,activo:true,orden:S.productos.length+1}),'Producto agregado al final de la lista')},
-  cajEditar:()=>{S.cajEdit=!S.cajEdit;S.cajEd={};S.cajNuevo={nombre:'',clave:''}},
+  cajEditar:()=>{S.cajEdit=!S.cajEdit;S.cajEd={};S.cajNuevo={nombre:'',clave:'',rol:'cajero'}},
   agregarCajero:async()=>{
     const nombre=S.cajNuevo.nombre.trim().replace(/\s+/g,' '),clave=S.cajNuevo.clave.trim();
     if(!nombre)return toast('Escribí el nombre del cajero.',true);
     if(S.cajeros.some(c=>c.nombre.toLowerCase()===nombre.toLowerCase()))return toast('Ese cajero ya está en la lista.',true);
     if(!/^\d{4,8}$/.test(clave))return toast('La clave tiene que tener entre 4 y 8 números.',true);
     const id='c'+Date.now().toString(36),claveHash=await hashClave(id,clave);
-    S.cajNuevo={nombre:'',clave:''};toast('Cajero agregado: '+nombre);
-    w(()=>S.db.doc('cajeros/'+id).set({nombre,codigo:codigoCajero(nombre),claveHash,creado:Date.now()}))},
+    const rol=S.cajNuevo.rol||'cajero';
+    S.cajNuevo={nombre:'',clave:'',rol};toast(`${ROLES_PERSONAL[rol]} agregado: ${nombre}`);
+    w(()=>S.db.doc('cajeros/'+id).set({nombre,rol,codigo:codigoCajero(nombre),claveHash,creado:Date.now()}))},
   cajGuardar:async v=>{const c=S.cajeros.find(x=>x.id===v);if(!c)return;const e=S.cajEd[v]||{};
     const nombre=(e.nombre??c.nombre).trim().replace(/\s+/g,' '),clave=(e.clave||'').trim(),cambios={};
     if(!nombre)return toast('El nombre no puede quedar vacío.',true);
     if(nombre!==c.nombre){if(S.cajeros.some(x=>x.id!==v&&x.nombre.toLowerCase()===nombre.toLowerCase()))return toast('Ya hay un cajero con ese nombre.',true);cambios.nombre=nombre}
+    if(e.rol&&e.rol!==(c.rol||'cajero'))cambios.rol=e.rol;
     if(clave){if(!/^\d{4,8}$/.test(clave))return toast('La clave tiene que tener entre 4 y 8 números.',true);cambios.claveHash=await hashClave(v,clave)}
     if(!Object.keys(cambios).length)return toast('No hay cambios para guardar.');
-    delete S.cajEd[v];toast(cambios.claveHash?`Guardado. ${nombre} tiene que volver a iniciar sesión.`:'Cajero actualizado: '+nombre);
+    delete S.cajEd[v];toast(cambios.claveHash||cambios.rol?`Guardado. ${nombre} tiene que volver a iniciar sesión.`:'Actualizado: '+nombre);
     w(()=>S.db.doc('cajeros/'+v).update(cambios))},
   cajSalir:()=>{if(Object.keys(S.ticket).length)return toast('Tenés un pedido sin cobrar. Cobralo o pedí autorización para vaciarlo.',true);
     cerrarCajSesion(true);toast('Sesión cerrada')},
@@ -781,15 +925,16 @@ const ACT={
 const hashClave=(id,clave)=>sha('cajero:'+id+':'+clave);
 function cajSesionValida(){
   const s=S.cajSesion;if(!s)return null;
-  if(!S.cajerosOk)return {...s,nombre:s.nombre||''};            /* todavía cargando la lista: confiar en lo guardado */
+  if(!S.cajerosOk)return {...s,nombre:s.nombre||'',rol:s.rol||'cajero'};   /* todavía cargando la lista: confiar en lo guardado */
   const c=S.cajeros.find(x=>x.id===s.id);
   if(!c||!c.claveHash||c.claveHash!==s.k)return null;
+  if(s.rol&&(c.rol||'cajero')!==s.rol)return null;                 /* le cambiaron el rol: vuelve a ingresar */
   if(S.barras.length&&!S.barras.some(b=>b.id===s.barra))return null;
-  return {...s,nombre:c.nombre}}
+  return {...s,nombre:c.nombre,rol:c.rol||'cajero'}}
 function guardarCajSesion(v){S.cajSesion=v;ls('cajSesion',v?JSON.stringify(v):'')}
-function registrarSesion(tipo,nombre,cajeroId,barra){
+function registrarSesion(tipo,nombre,cajeroId,barra,rol){
   const at=Date.now(),d=new Date(at);
-  if(S.db)w(()=>S.db.collection('sesiones').add({evento:evId()||'',tipo,cajeroId,cajero:nombre,barra,barraNombre:barraNom(barra),
+  if(S.db)w(()=>S.db.collection('sesiones').add({evento:evId()||'',tipo,cajeroId,cajero:nombre,rol:rol||(S.cajeros.find(c=>c.id===cajeroId)||{}).rol||'cajero',barra,barraNombre:barraNom(barra),
     at,fecha:d.toLocaleDateString('es-AR'),hora:d.toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit',second:'2-digit'})}))}
 function cerrarCajSesion(registrar){
   const s=S.cajSesion;
@@ -805,19 +950,22 @@ async function cajIngresar(){
   if(h!==c.claveHash){S.fallos++;if(S.fallos>=5){S.fallos=0;S.esperarHasta=Date.now()+30000;setTimeout(sched,30500)}
     return toast('Clave incorrecta.',true)}
   S.fallos=0;
-  guardarCajSesion({id:c.id,nombre:c.nombre,barra:L.barra,k:h,at:Date.now()});
-  S.quien=c.nombre;S.barra=L.barra;ls('barra',L.barra);S.ticket={};S.last=null;
-  registrarSesion('ingreso',c.nombre,c.id,L.barra);                                   /* auditoría */
-  enviarAlertaAutomatica(`El cajero ${c.nombre} inició sesión en la ${barraNom(L.barra)}.`);   /* alerta silenciosa */
-  toast('Sesión iniciada: '+c.nombre)}
+  const rol=c.rol||'cajero';
+  guardarCajSesion({id:c.id,nombre:c.nombre,rol,barra:L.barra,k:h,at:Date.now()});
+  S.quien=c.nombre;S.barra=L.barra;ls('barra',L.barra);S.ticket={};S.last=null;S.vistas=null;
+  if(rolActual()!=='encargado'){S.tab=rol==='bartender'?'comandas':'vender';ls('tab',S.tab)}
+  registrarSesion('ingreso',c.nombre,c.id,L.barra,rol);                                 /* auditoría */
+  enviarAlertaAutomatica(`El ${rol==='bartender'?'bartender':'cajero'} ${c.nombre} inició sesión en la ${barraNom(L.barra)}.`);   /* alerta silenciosa */
+  desbloquearAudio();
+  toast('Sesión iniciada: '+c.nombre+' · '+ROLES_PERSONAL[rol])}
 function vCajLogin(){
   const L=S.cajLogin,espera=Math.ceil((S.esperarHasta-Date.now())/1000);
   if(!S.cajeros.length)return `<div class="empty">${rolActual()==='encargado'?'Cargá los cajeros y sus claves en Ajustes → Cajeros para poder vender.':'Todavía no hay cajeros habilitados. Pedile al encargado que te agregue.'}</div>`;
   if(!S.barras.length)return `<div class="empty">Todavía no hay barras cargadas.</div>`;
   return `<form class="login" id="cajForm" autocomplete="off">
     <h2>Inicio de sesión</h2>
-    <p>Elegí tu nombre y tu barra, y escribí tu clave para empezar a vender.</p>
-    <label for="cajNombre"><div class="label">Cajero</div><select class="f" id="cajNombre" style="width:100%"><option value="">Elegí tu nombre</option>${S.cajeros.map(c=>`<option value="${esc(c.id)}"${c.id===L.id?' selected':''}${c.claveHash?'':' disabled'}>${esc(c.nombre)}${c.claveHash?'':' (sin clave)'}</option>`).join('')}</select></label>
+    <p>Cajeros y bartenders: elegí tu nombre y tu barra, y escribí tu clave.</p>
+    <label for="cajNombre"><div class="label">Nombre</div><select class="f" id="cajNombre" style="width:100%"><option value="">Elegí tu nombre</option>${S.cajeros.map(c=>`<option value="${esc(c.id)}"${c.id===L.id?' selected':''}${c.claveHash?'':' disabled'}>${esc(c.nombre)} · ${ROLES_PERSONAL[c.rol||'cajero']}${c.claveHash?'':' (sin clave)'}</option>`).join('')}</select></label>
     <label for="cajBarra"><div class="label">Barra</div>${selBarra('cajBarra',L.barra)}</label>
     <label for="cajClave" class="label">Clave de acceso</label>
     <input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="8" id="cajClave" value="${esc(L.clave)}" ${espera>0?'disabled':''}>
@@ -885,7 +1033,7 @@ function vAuth(){
 let pend={};function confirmar(k,msg){if(pend[k]&&Date.now()-pend[k]<4000){delete pend[k];return true}pend[k]=Date.now();toast(msg);return false}
 
 /* Permisos: ¿este rol puede ejecutar esta acción? */
-function puede(act){return rolActual()==='encargado'||ACT_CAJERO.has(act)}
+function puede(act){const r=rolActual();return r==='encargado'||(r==='bartender'?ACT_BARTENDER:ACT_CAJERO).has(act)}
 
 document.addEventListener('click',async e=>{
   const t=e.target.closest('[data-tab]');if(t){if(!permitidas().includes(t.dataset.tab))return;S.tab=t.dataset.tab;ls('tab',S.tab);render();window.scrollTo(0,0);return}
@@ -895,6 +1043,7 @@ document.addEventListener('click',async e=>{
   const f=ACT[act];if(!f)return;const r=f(a.dataset.v);render();if(r&&r.then){await r;sched()}});
 document.addEventListener('keydown',e=>{
   if(e.key==='Escape'&&S.auth){ACT.authCancel();render();return}
+  if(e.key==='Escape'&&S.borrarProd){ACT.cancelarBorrarProd();render();return}
   if(e.key==='Escape'&&S.evModal){ACT.cerrarEventos();render()}
   if(e.key==='Enter'&&e.target.id==='nuevoEv'){e.preventDefault();ACT.crearEv();render()}
   if(e.key==='Enter'&&e.target.id==='editEvNombre'&&S.editEv){e.preventDefault();ACT.guardarEv(S.editEv);render()}
@@ -913,6 +1062,8 @@ document.addEventListener('input',e=>{const el=e.target;
   else if(el.id==='nuevoCajClave')S.cajNuevo.clave=el.value;
   else if(el.dataset.cn)(S.cajEd[el.dataset.cn]||(S.cajEd[el.dataset.cn]={})).nombre=el.value;
   else if(el.dataset.ck)(S.cajEd[el.dataset.ck]||(S.cajEd[el.dataset.ck]={})).clave=el.value;
+  else if(el.dataset.cr)(S.cajEd[el.dataset.cr]||(S.cajEd[el.dataset.cr]={})).rol=el.value;
+  else if(el.id==='nuevoCajRol')S.cajNuevo.rol=el.value;
   else if(el.id==='authPin')S.authPin=el.value;
 
   else if(el.id==='proveedor')S.proveedor=el.value;
@@ -926,6 +1077,7 @@ document.addEventListener('input',e=>{const el=e.target;
 document.addEventListener('change',e=>{const el=e.target;
   if(el.id==='barraSel'){ACT.setBarra(el.value);el.blur();render();return}                /* barra de trabajo: cajero o encargado */
   if(rolActual()!=='encargado')return;         /* evento, productos y barras: solo encargado */
+  if(el.id==='comBarraSel'){S.comBarra=el.value;el.blur();render();return}
   if(el.id==='movBarraSel'){ACT.movBarra(el.value);el.blur();render();return}
   if(el.id==='cierreBarraSel'){ACT.cierreBarra(el.value);el.blur();render();return}
   if(el.id==='evSel'){cambiarEvento(el.value);el.blur();render();return}
@@ -945,7 +1097,7 @@ async function exportar(){
     const fh=t=>t?new Date(t).toLocaleString('es-AR'):'';
     const ventas=[];const otros=[];const resumen={};
     for(const m of [...S.movs].sort((a,b)=>(a.at||0)-(b.at||0))){
-      if(m.tipo==='venta')for(const x of m.lineas||[]){ventas.push({'Fecha y hora':fh(m.at),'Lado':barraNom(m.barra),'Pedido':m.numero||'','Cajero':m.quien||'','Producto':prod(x.p).nombre,'Cantidad':x.q,'Precio':x.precio,'Subtotal':x.q*x.precio,'Costo':x.q*x.costo,'Medio de pago':(PAGOS.find(p=>p[0]===m.pago)||[0,m.pago])[1],'Entregado':m.entregado===false?'No':'Sí'});
+      if(m.tipo==='venta')for(const x of m.lineas||[]){ventas.push({'Fecha y hora':fh(m.at),'Lado':barraNom(m.barra),'Pedido':m.numero||'','Cajero':m.quien||'','Producto':prod(x.p).nombre,'Cantidad':x.q,'Precio':x.precio,'Subtotal':x.q*x.precio,'Costo':x.q*x.costo,'Medio de pago':nombrePago(m.pago),'Efectivo':m.pago==='efectivo'?x.q*x.precio:0,'Mercado Pago':m.pago==='mercadopago'?x.q*x.precio:0,'Tarjeta':m.pago==='tarjeta'?x.q*x.precio:0,'Entregado':m.entregado===false?'No':'Sí','Entregado por':m.entregadoPor||''});
         const r=resumen[x.p]||(resumen[x.p]={'Producto':prod(x.p).nombre,'Unidades':0,'Facturación':0,'Costo':0});r.Unidades+=x.q;r['Facturación']+=x.q*x.precio;r.Costo+=x.q*x.costo}
       else if(m.tipo==='anulacion')otros.push({'Fecha y hora':fh(m.at),'Tipo':TIPOS.anulacion,'Motivo':m.detalle||'','Lado / proveedor':m.barra||'','Producto':'','Cantidad':'','Quién':m.quien||''});
       else for(const x of m.lineas||[])otros.push({'Fecha y hora':fh(m.at),'Tipo':TIPOS[m.tipo]||m.tipo,'Motivo':m.motivo||'','Lado / proveedor':m.tipo==='compra'?(m.proveedor||''):barraNom(m.barra),'Producto':prod(x.p).nombre,'Cantidad':x.q,'Quién':m.quien||''})}
@@ -955,8 +1107,17 @@ async function exportar(){
       cie.push({'Lado':barraNom(b),'Producto':'EFECTIVO','Debería quedar':k.efEsperado,'Contado':k.efContado,'Diferencia':k.efContado-k.efEsperado})}
     const wb=XLSX.utils.book_new();
     const hoja=(rows,n,vacio)=>XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(rows.length?rows:[{'':vacio}]),n);
-    const ses=S.sesiones.map(x=>({'Fecha':x.fecha||new Date(x.at).toLocaleDateString('es-AR'),'Hora':x.hora||new Date(x.at).toLocaleTimeString('es-AR'),'Cajero':x.cajero||'','Barra':x.barraNombre||barraNom(x.barra),'Tipo':x.tipo==='salida'?'Cierre de sesión':'Inicio de sesión'}));
-    hoja(res,'Resumen productos','Sin ventas');hoja(ventas,'Ventas','Sin ventas');hoja(otros,'Movimientos stock','Sin movimientos');hoja(cie,'Cierres','Sin cierres');hoja(ses,'sesiones','Sin sesiones');
+    const ses=S.sesiones.map(x=>({'Fecha':x.fecha||new Date(x.at).toLocaleDateString('es-AR'),'Hora':x.hora||new Date(x.at).toLocaleTimeString('es-AR'),'Cajero':x.cajero||'','Rol':ROLES_PERSONAL[x.rol||'cajero']||'','Barra':x.barraNombre||barraNom(x.barra),'Tipo':x.tipo==='salida'?'Cierre de sesión':'Inicio de sesión'}));
+    hoja(res,'Resumen productos','Sin ventas');hoja(ventas,'Ventas','Sin ventas');hoja(otros,'Movimientos stock','Sin movimientos');hoja(cie,'Cierres','Sin cierres');
+    /* hoja Caja: total por barra y cajero en cada medio de pago, para cuadrar */
+    const caja={};for(const m of S.movs.filter(x=>x.tipo==='venta')){const k=m.barra+'|'+(m.quien||'');
+      const r=caja[k]||(caja[k]={'Barra':barraNom(m.barra),'Cajero':m.quien||'','Ventas':0,'Efectivo':0,'Mercado Pago':0,'Tarjeta':0,'Otros':0,'Total':0});
+      const col=m.pago==='efectivo'?'Efectivo':m.pago==='mercadopago'?'Mercado Pago':m.pago==='tarjeta'?'Tarjeta':'Otros';
+      r[col]+=+m.total||0;r.Total+=+m.total||0;r.Ventas++}
+    const cajaRows=Object.values(caja).sort((a,b)=>a.Barra.localeCompare(b.Barra)||a.Cajero.localeCompare(b.Cajero));
+    if(cajaRows.length)cajaRows.push(['Ventas','Efectivo','Mercado Pago','Tarjeta','Otros','Total'].reduce((t,c)=>(t[c]=cajaRows.reduce((a,r)=>a+r[c],0),t),{'Barra':'TOTAL','Cajero':''}));
+    hoja(cajaRows,'Caja','Sin ventas');
+    hoja(ses,'sesiones','Sin sesiones');
     const buf=XLSX.write(wb,{type:'array',bookType:'xlsx'});
     await S.dl.save({filename:`Barras ${ev}.xlsx`,data:buf});toast('Excel listo')}
   catch(e){if(!(e&&e.code==='declined'))toast(e&&e.message?'No se pudo exportar: '+e.message:'No se pudo armar el Excel. Revisá la conexión.',true)}
@@ -986,7 +1147,7 @@ const firebaseConfig = {
 const ALERTAS = {
   proveedor: '',                       // 'callmebot' (WhatsApp) o 'telegram'
   callmebot: [                         // un objeto por encargado — https://www.callmebot.com
-    // { telefono: '543731667513', apikey: '1234567' },
+    // { telefono: '5493731123456', apikey: '1234567' },
   ],
   telegram: {
     token: '',                         // token del bot que te da @BotFather
