@@ -1,0 +1,1264 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>By Elites</title>
+
+<!-- PWA -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#07070d">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="By Elites">
+<link rel="apple-touch-icon" href="icon-192.png">
+
+<!-- Firebase (compat) -->
+<script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore-compat.js"></script>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&display=swap">
+<style>
+/* Layout: POS de barra nocturna. Barra superior con evento y secciones; botonera grande + ticket al costado (apilado en celular). Tema oscuro único, pensado para barras con poca luz. */
+:root{
+  /* Nightclub kiosk: negro azulado profundo, acentos neón sutiles. Violeta = acción, cian = info, oro = marca */
+  --bg:#07070d; --panel:#11111b; --panel2:#191926; --line:#262638;
+  --fg:#f4f2ff; --muted:#9a97b6; --accent:#b46cff; --accent-ink:#0c0614; --accent2:#2fe3ea; --gold:#f6c453;
+  --good:#2ff0a0; --bad:#ff4f7e; --warn:#ffb648; --mp:#00b1ea;
+  --c-esp:#b46cff; --c-champ:#f6c453; --c-cerv:#ff9a42; --c-sin:#2fe3ea; --c-otro:#9a97b6;
+  --glow:0 0 18px color-mix(in srgb,var(--accent) 55%,transparent);
+  --f-display:"Barlow Condensed","Arial Narrow",system-ui,sans-serif;
+  --f-body:"Barlow",system-ui,-apple-system,"Segoe UI",sans-serif;
+  color-scheme:dark;
+}
+html,body{background:var(--bg);color:var(--fg)}
+[hidden]{display:none!important}
+body{margin:0;-webkit-text-size-adjust:100%;font-family:var(--f-body);font-size:15px;line-height:1.4;padding-inline:16px;padding-block:0 32px}
+*{box-sizing:border-box}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.num{font-variant-numeric:tabular-nums}
+header{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);padding-block:12px 0;margin-inline:-16px;padding-inline:16px;border-bottom:1px solid var(--line)}
+.top{display:flex;align-items:center;gap:12px;flex-wrap:wrap;justify-content:space-between}
+h1{font-family:var(--f-display);font-weight:700;font-size:24px;letter-spacing:.02em;margin:0}
+h1 span{color:var(--accent)}
+.evento{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:13px}
+.evento select{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:6px 8px}
+nav{display:flex;gap:4px;overflow-x:auto;margin-top:10px;scrollbar-width:none}
+nav button{background:none;border:0;border-bottom:3px solid transparent;padding:8px 12px 10px;font-family:var(--f-display);font-size:17px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);white-space:nowrap}
+nav button[aria-current="page"]{color:var(--fg);border-color:var(--accent)}
+main{padding-top:16px;max-width:1200px;margin-inline:auto}
+.banner{background:var(--panel2);border:1px solid var(--line);border-left:4px solid var(--warn);border-radius:8px;padding:10px 12px;margin-bottom:14px;font-size:14px}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.label{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.seg{display:flex;flex-wrap:wrap;gap:6px}
+.seg button{background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:8px 14px;font-weight:600}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+input[type=text],input[type=number],input[type=password],input[type=tel],select.f{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:9px 10px;min-width:0}
+input[type=number]{width:100%}
+.btn{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:10px 16px;font-weight:600}
+.btn.pri{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.btn.ghost{background:none}
+.btn.danger{color:var(--bad)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+h2{font-family:var(--f-display);font-size:22px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;margin:0 0 10px}
+h3{font-family:var(--f-display);font-size:18px;font-weight:600;letter-spacing:.03em;text-transform:uppercase;margin:0 0 8px;color:var(--muted)}
+section+section{margin-top:28px}
+.empty{color:var(--muted);padding:24px;text-align:center;border:1px dashed var(--line);border-radius:12px}
+
+/* Vender */
+.pos{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:16px;align-items:start;margin-top:14px}
+@media (max-width:820px){.pos{grid-template-columns:minmax(0,1fr)}}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px}
+.prod{position:relative;text-align:left;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 12px 12px 16px;min-height:104px;display:flex;flex-direction:column;justify-content:space-between;gap:6px;overflow:hidden;touch-action:manipulation}
+.prod::before{content:"";position:absolute;inset:0 auto 0 0;width:5px;background:var(--cat)}
+.prod:active{transform:scale(.98);background:var(--panel2)}
+.prod .n{font-family:var(--f-display);font-size:22px;font-weight:700;line-height:1.05;text-transform:uppercase;letter-spacing:.02em}
+.prod .p{font-weight:600;font-size:16px}
+.prod .pie{display:flex;justify-content:space-between;align-items:flex-end;gap:6px}
+.prod .stk{display:flex;flex-direction:column;align-items:flex-end;line-height:1;color:var(--good)}
+.prod .stk b{font-family:var(--f-display);font-size:24px;font-weight:700}
+.prod .stk s{font-size:12px;color:var(--muted);margin-bottom:2px}
+.prod .stk small{white-space:nowrap;font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-top:2px}
+.prod.low .stk{color:var(--warn)} .prod.out .stk{color:var(--bad)}
+.selrow{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;max-width:560px}
+.prod .q{position:absolute;top:8px;right:8px;background:var(--accent);color:var(--accent-ink);border-radius:999px;min-width:28px;height:28px;display:grid;place-items:center;font-weight:700;padding-inline:6px}
+.prod.noprice .p{color:var(--bad);font-size:13px}
+.ticket{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px;position:sticky;top:120px}
+@media (max-width:820px){.ticket{position:static}}
+.tl{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--line)}
+.tl .nm{flex:1;min-width:0}
+.tl button{width:32px;height:32px;border-radius:8px;border:1px solid var(--line);background:var(--panel2);font-weight:700}
+.total{display:flex;justify-content:space-between;align-items:baseline;margin:12px 0}
+.total b{font-family:var(--f-display);font-size:40px;font-weight:700}
+.pays{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.pays button{padding:16px 8px;border-radius:10px;border:1px solid var(--line);background:var(--panel2);font-family:var(--f-display);font-size:20px;font-weight:700;letter-spacing:.04em;text-transform:uppercase}
+.pays button.cash{background:var(--good);border-color:var(--good);color:#06180f}
+.pays button.qr{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.undo{margin-top:12px;display:flex;justify-content:space-between;align-items:center;gap:8px;background:var(--panel2);border-radius:10px;padding:8px 10px;font-size:14px}
+
+/* Tablas */
+.tw{overflow-x:auto;border:1px solid var(--line);border-radius:12px}
+table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums}
+th,td{padding:8px 10px;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap}
+th{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600;background:var(--panel)}
+th:first-child,td:first-child{text-align:left}
+tr:last-child td{border-bottom:0}
+td.neg{color:var(--bad);font-weight:600} td.pos{color:var(--warn);font-weight:600} td.ok{color:var(--good)}
+td.low{color:var(--warn)} td.out{color:var(--bad)}
+.dot{display:inline-block;width:8px;height:8px;border-radius:2px;background:var(--cat);margin-right:8px;vertical-align:middle}
+td input{width:100px;text-align:right}
+td input.wide{width:160px;text-align:left}
+
+/* Panel */
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px}
+.kpi{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+.kpi b{display:block;font-family:var(--f-display);font-size:30px;font-weight:700;margin-top:2px}
+.kpi small{color:var(--muted)}
+.cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px}
+.bars{display:grid;gap:8px}
+.bar{display:grid;grid-template-columns:110px minmax(0,1fr) auto;gap:10px;align-items:center;font-size:14px}
+.bar .tr{height:12px;background:var(--panel2);border-radius:4px;overflow:hidden}
+.bar .tr i{display:block;height:100%;background:var(--accent)}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px}
+.pill{display:inline-block;border-radius:999px;padding:2px 8px;font-size:12px;font-weight:600}
+.pill.bad{background:color-mix(in srgb,var(--bad) 20%,transparent);color:var(--bad)}
+.pill.ok{background:color-mix(in srgb,var(--good) 20%,transparent);color:var(--good)}
+.pill.warn{background:color-mix(in srgb,var(--warn) 20%,transparent);color:var(--warn)}
+
+/* Formularios de stock */
+.qtylist{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px;margin-top:10px}
+.qi{display:flex;align-items:center;gap:8px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:8px 10px}
+.qi .nm{flex:1;min-width:0;font-weight:600}
+.qi input{width:84px}
+.peds{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px;margin-top:14px}
+.ped{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:10px}
+.ped .nro{font-family:var(--f-display);font-size:44px;font-weight:700;line-height:1;color:var(--accent)}
+.ped .it{font-size:18px;font-weight:600;line-height:1.35}
+.ped .t{font-size:13px;color:var(--muted)} .ped.late .t{color:var(--warn);font-weight:600}
+.ped button{padding:14px;border-radius:10px;border:0;background:var(--good);color:#06180f;font-family:var(--f-display);font-size:20px;font-weight:700;text-transform:uppercase;letter-spacing:.04em}
+.login{max-width:420px;margin:32px auto 0;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:22px 18px;display:grid;gap:16px}
+.login h2{margin:0}
+.login .seg{display:grid;grid-template-columns:repeat(3,1fr)}
+.login .seg button{border-radius:10px;padding:12px 6px;font-size:14px}
+.login input{font-size:28px;letter-spacing:.3em;text-align:center;padding:12px;width:100%}
+.login .btn{padding:14px;font-size:17px}
+.login p{margin:0;color:var(--muted);font-size:14px}
+.modal-bg{position:fixed;inset:0;background:rgb(0 0 0 / .6);z-index:30}
+.modal{position:fixed;z-index:31;left:50%;top:calc(24px + env(safe-area-inset-top,0px));transform:translateX(-50%);width:min(560px,calc(100% - 32px));max-height:calc(100% - 48px);overflow-y:auto;background:var(--bg);border:1px solid var(--line);border-radius:16px;padding:16px;box-shadow:0 20px 50px rgb(0 0 0 / .5)}
+.modal-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.modal-head h2{margin:0}
+.evbtn{padding:6px 10px;font-size:13px}
+.evlist{display:grid;gap:8px}
+.btn.trash{display:inline-flex;align-items:center;gap:6px;padding:7px 10px}
+.btn.danger-fill{background:var(--bad);border-color:var(--bad);color:#fff}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+.aviso{margin:14px 0 0;padding-top:12px;border-top:1px solid var(--line);color:var(--muted);font-size:14px}
+.cajbar{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:8px 8px 8px 14px}
+.sechead{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px}
+.sechead h2{margin:0}
+.btn.icon{width:42px;height:42px;padding:0;display:grid;place-items:center}
+.btn.icon.on{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.cajtab th,.cajtab td{text-align:left}
+.cajtab td input{width:100%;min-width:140px;text-align:left}
+.cajtab tr.nuevo td{background:var(--panel2)}
+.evrow{display:flex;align-items:center;gap:8px;flex-wrap:wrap;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:8px 10px}
+.evrow.on{border-color:var(--accent)}
+.evname{flex:1 1 180px;display:flex;align-items:center;gap:10px;background:none;border:0;padding:8px 4px;text-align:left;font-family:var(--f-display);font-size:20px;font-weight:700;text-transform:uppercase;letter-spacing:.02em;min-width:0}
+.evname .radio{width:18px;height:18px;border-radius:50%;border:2px solid var(--muted);flex:none}
+.evrow.on .evname .radio{border-color:var(--accent);background:radial-gradient(var(--accent) 45%,transparent 50%)}
+.evacts{display:flex;gap:6px;margin-left:auto}
+.evacts .btn{padding:8px 12px}
+.toast{z-index:40!important;position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:10px 16px;border-radius:10px;font-weight:600;z-index:20;max-width:calc(100% - 32px)}
+.toast.err{background:var(--bad);color:#fff}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+
+/* ================= Nightclub kiosk ================= */
+body{background:radial-gradient(1200px 600px at 85% -10%,rgb(180 108 255 / .14),transparent 60%),radial-gradient(900px 500px at -10% 110%,rgb(47 227 234 / .08),transparent 60%),var(--bg);background-attachment:fixed}
+header{background:rgb(7 7 13 / .82);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-bottom-color:rgb(255 255 255 / .06)}
+h1{font-size:26px;letter-spacing:.01em}
+h1 span{background:linear-gradient(90deg,var(--gold),#ff8ad8 60%,var(--accent));-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 0 10px rgb(246 196 83 / .35))}
+nav button[aria-current="page"]{color:#fff;border-color:var(--accent);text-shadow:0 0 12px color-mix(in srgb,var(--accent) 70%,transparent);box-shadow:0 6px 14px -8px var(--accent)}
+.btn{border-radius:12px;transition:transform .08s,box-shadow .15s,background .15s}
+.btn:active{transform:scale(.97)}
+.btn.pri{background:linear-gradient(135deg,var(--accent),#8a4dff);border-color:transparent;color:#fff;box-shadow:var(--glow)}
+.pill.ok{background:rgb(47 240 160 / .12);color:var(--good)} .pill.warn{background:rgb(255 182 72 / .12);color:var(--warn)}
+.card,.kpi,.ticket,.login,.modal,.evrow,.cajbar,.tw{background:linear-gradient(180deg,rgb(255 255 255 / .025),transparent),var(--panel);border-color:rgb(255 255 255 / .07)}
+.kpi b{background:linear-gradient(90deg,#fff,var(--accent2));-webkit-background-clip:text;background-clip:text;color:transparent}
+.bar .tr i{background:linear-gradient(90deg,var(--accent),var(--accent2));box-shadow:0 0 10px var(--accent)}
+input[type=text],input[type=number],input[type=password],input[type=tel],select.f{background:#0d0d16;border-color:var(--line);border-radius:10px}
+input:focus,select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgb(180 108 255 / .22)}
+.cajbar{border-radius:14px}
+.cajbar b{color:var(--accent2)}
+.pill.rol-bartender{background:rgb(47 227 234 / .12);color:var(--accent2)} .pill.rol-cajero{background:rgb(180 108 255 / .14);color:#d6b4ff}
+
+/* Vender: grilla táctil de tarjetas cuadradas */
+.grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
+@media (max-width:520px){.grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}}
+.prod{aspect-ratio:1/1;min-height:0;border-radius:20px;padding:16px 14px 14px;background:radial-gradient(120% 90% at 0% 0%,color-mix(in srgb,var(--cat) 16%,transparent),transparent 60%),var(--panel2);
+  border:1px solid color-mix(in srgb,var(--cat) 30%,var(--line));user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent;transition:transform .07s,box-shadow .15s,border-color .15s}
+.prod::before{inset:0 0 auto 0;width:auto;height:4px;background:var(--cat);box-shadow:0 0 16px var(--cat)}
+.prod:hover{border-color:color-mix(in srgb,var(--cat) 60%,var(--line))}
+.prod:active{transform:scale(.95);background:var(--panel2)}
+.prod.sel{border-color:var(--cat);box-shadow:0 0 0 1px var(--cat),0 0 26px -4px var(--cat)}
+.prod .n{font-size:clamp(19px,2.1vw,25px);line-height:1.02;overflow-wrap:anywhere;hyphens:auto}
+.prod.sel .n{padding-right:38px}
+.prod .p{font-size:17px}
+.prod .q{top:10px;right:10px;min-width:36px;height:36px;font-size:19px;background:var(--cat);color:#0c0614;box-shadow:0 0 16px var(--cat)}
+.prod .stk b{font-size:28px}
+.prod:disabled{opacity:.5}
+.ticket{border-radius:20px;top:118px}
+.total b{font-size:44px;text-shadow:0 0 18px rgb(255 255 255 / .15)}
+.pays{grid-template-columns:1fr;gap:10px}
+.pays button{padding:18px 12px;border-radius:14px;font-size:22px;border:1px solid var(--line);background:var(--panel2);transition:transform .07s,box-shadow .15s}
+.pays button:active{transform:scale(.97)}
+.pays button.cash{background:linear-gradient(135deg,#2ff0a0,#19c98a);border-color:transparent;color:#03140c;box-shadow:0 0 20px -4px var(--good)}
+.pays button.mp{background:linear-gradient(135deg,#21c4ff,var(--mp));border-color:transparent;color:#00131c;box-shadow:0 0 20px -4px var(--mp)}
+.pays button.card{background:linear-gradient(135deg,var(--accent),#8a4dff);border-color:transparent;color:#fff;box-shadow:0 0 20px -4px var(--accent)}
+.pays button:disabled{background:var(--panel2);color:var(--muted);box-shadow:none}
+.tl button{border-radius:10px}
+.mbar{display:none}
+@media (max-width:820px){
+  .mbar{position:fixed;left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom,0px));z-index:15;display:flex;justify-content:space-between;align-items:center;gap:10px;
+    padding:14px 18px;border:0;border-radius:16px;background:linear-gradient(135deg,var(--accent),#8a4dff);color:#fff;font-family:var(--f-display);font-size:20px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;box-shadow:0 10px 30px -6px rgb(180 108 255 / .7)}
+  .mbar b{font-size:24px}
+  main{padding-bottom:80px}
+  .toast{bottom:calc(88px + env(safe-area-inset-bottom,0px))}
+}
+
+/* Comandas (KDS) */
+.comhead{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:16px 0 4px}
+.comhead h2{margin:0}
+.peds{grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px}
+.ped{border-radius:20px;padding:16px;gap:14px;background:linear-gradient(180deg,rgb(47 227 234 / .06),transparent 40%),var(--panel);border:1px solid rgb(47 227 234 / .25)}
+.ped.nuevo{animation:pulso 1.2s ease-in-out 3;border-color:var(--accent2)}
+.ped.late{border-color:rgb(255 182 72 / .55);background:linear-gradient(180deg,rgb(255 182 72 / .08),transparent 40%),var(--panel)}
+@keyframes pulso{50%{box-shadow:0 0 0 2px var(--accent2),0 0 34px -2px var(--accent2)}}
+.ped .phead{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.ped .nro{font-size:56px;color:#fff;text-shadow:0 0 18px var(--accent2)}
+.ped .meta{display:flex;flex-direction:column;align-items:flex-end;text-align:right;font-size:14px;color:var(--muted)}
+.ped .meta b{color:var(--fg);font-size:16px}
+.ped.late .meta span{color:var(--warn);font-weight:600}
+.ped .it{list-style:none;margin:0;padding:0;display:grid;gap:6px;font-size:21px;font-weight:600}
+.ped .it b{color:var(--accent2);margin-right:6px}
+.ped .entregar{padding:20px;border:0;border-radius:16px;font-family:var(--f-display);font-size:26px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:#03140c;
+  background:linear-gradient(135deg,#2ff0a0,#19c98a);box-shadow:0 0 24px -4px var(--good);touch-action:manipulation}
+.ped .entregar:active{transform:scale(.97)}
+@media (prefers-reduced-motion:reduce){.ped.nuevo{animation:none}.prod,.btn,.pays button{transition:none}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="top">
+    <h1>By <span>Elites</span></h1>
+    <div class="row"><span id="net" class="pill" hidden></span><label class="evento" for="evSel">Evento <select id="evSel" aria-label="Evento actual"></select><button type="button" class="btn ghost evbtn" data-act="abrirEventos" aria-label="Gestionar eventos">Gestionar</button></label><span id="rolPill" class="pill" hidden></span><button class="btn ghost" id="rolBtn" style="padding:6px 10px;font-size:13px" hidden></button></div>
+  </div>
+  <nav id="nav">
+    <button data-tab="vender">Vender</button>
+    <button data-tab="comandas">Comandas</button>
+    <button data-tab="stock">Stock</button>
+    <button data-tab="cierre">Cierre</button>
+    <button data-tab="panel">Panel</button>
+    <button data-tab="ajustes">Ajustes</button>
+  </nav>
+</header>
+<main id="main"><div class="empty">Conectando con la base de datos…</div></main>
+<div id="modal"></div>
+<div id="toast" class="toast" hidden></div>
+
+<script>
+const CATS={spirit:{n:'Spirit',c:'var(--c-esp)'},espumante:{n:'Espumante',c:'var(--c-champ)'},cerveza:{n:'Cerveza',c:'var(--c-cerv)'},sin_alcohol:{n:'Sin alcohol',c:'var(--c-sin)'},otro:{n:'Otro',c:'var(--c-otro)'}};
+const PAGOS=[['efectivo','Efectivo','cash'],['mercadopago','Mercado Pago','mp'],['tarjeta','Tarjeta','card']];
+const PAGO_NOMBRE={efectivo:'Efectivo',mercadopago:'Mercado Pago',tarjeta:'Tarjeta',qr:'QR (anterior)',transferencia:'Transferencia (anterior)'};
+const nombrePago=k=>PAGO_NOMBRE[k]||k||'';
+const MOTIVOS=['Rota','Cortesía','Personal','Promo'];
+const TIPOS={compra:'Compra al depósito',carga:'Enviar a barra',devolucion:'Devolver al depósito',baja:'Baja',anulacion:'Eliminación autorizada'};
+
+function ls(k,v){try{if(v===undefined)return localStorage.getItem('bf_'+k);localStorage.setItem('bf_'+k,v)}catch(e){return null}}
+const S={db:null,ready:false,canWrite:true,productos:[],barras:[],eventos:[],config:{},
+  part:{},movs:[],cierres:{},tab:ls('tab')||'vender',barra:ls('barra')||'',quien:'',
+  ticket:{},last:null,movTipo:'carga',movBarra:'',movQty:{},motivo:'Rota',proveedor:'',
+  cierreBarra:'',conteo:{},efectivo:'',rehacer:false,nuevoEv:'',auth:null,authPin:'',cajSesion:leerCajSesion(),cajLogin:{id:'',barra:'',clave:''},cajEdit:false,cajEd:{},cajNuevo:{nombre:'',clave:'',rol:'cajero'},sesiones:[],comBarra:'',vistas:null,evModal:false,editEv:'',editEvNombre:'',borrarEvInfo:null,eventosOk:false,cajeros:[],cajerosOk:false,
+  movsDb:[],cola:[],pinIn:'',pinNuevo:'',exportando:false,
+  cfgOk:false,sesion:leerSesion(),loginAbierto:false,fallos:0,esperarHasta:0};
+
+/* ---------- acceso: dos roles fijos ----------
+   Cajero (por defecto): la app abre fija en Vender. Sin acceso a otras pestañas ni a la configuración.
+   Encargado (con PIN): acceso total a Vender, Pedidos, Stock, Cierre, Panel y Ajustes.
+   Mientras no haya PIN de encargado configurado, la app funciona como Encargado para poder hacer la puesta en marcha. */
+const TABS_ROL={encargado:['vender','comandas','stock','cierre','panel','ajustes'],cajero:['vender'],bartender:['comandas']};
+const NOMBRE_ROL={encargado:'Encargado',cajero:'Cajero',bartender:'Bartender'};
+const ROLES_PERSONAL={cajero:'Cajero',bartender:'Bartender'};
+const ACT_BARTENDER=new Set(['entregado','cajSalir','abrirLogin','cerrarLogin','entrar','authCancel']);   /* el bartender solo marca comandas entregadas */
+const ACT_CAJERO=new Set(['add','minus','limpiar','cobrar','entregado','deshacer','abrirLogin','cerrarLogin','entrar','authCancel','cajSalir']);
+function leerCajSesion(){try{return JSON.parse(ls('cajSesion')||'null')}catch(e){return null}}
+function leerSesion(){try{return JSON.parse(ls('sesion')||'null')}catch(e){return null}}
+function guardarSesion(s){S.sesion=s;ls('sesion',s?JSON.stringify(s):'')}
+const pinEnc=()=>S.config.pinHash||ls('pinHash')||'';
+function rolActual(){
+  const ph=pinEnc();
+  if(!ph)return 'encargado';                                         /* puesta en marcha: todavía no hay PIN */
+  const s=S.sesion;
+  if(s&&s.rol==='encargado'&&s.k===ph)return 'encargado';           /* si cambia el PIN, vuelve a Cajero */
+  const cs=cajSesionValida();
+  return cs&&cs.rol==='bartender'?'bartender':'cajero';               /* bartender: solo Comandas */
+}
+const permitidas=()=>TABS_ROL[rolActual()];
+const esperandoConfig=()=>S.db&&!S.cfgOk&&!pinEnc();           /* todavía no sabemos si hay PIN */
+
+/* ---------- IndexedDB: cola de ventas pendientes de subir (sin internet) ---------- */
+const DB_NAME='BarrasDB';
+const DB_VERSION=1;
+const STORE='cola';
+let dbPromise=null;
+
+function abrirDB(){
+  if(dbPromise)return dbPromise;
+  dbPromise=new Promise((resolve,reject)=>{
+    if(!('indexedDB' in window))return reject(new Error('IndexedDB no disponible'));
+    let req;
+    try{req=indexedDB.open(DB_NAME,DB_VERSION)}catch(e){return reject(e)}
+    req.onupgradeneeded=()=>{
+      const db=req.result;
+      if(!db.objectStoreNames.contains(STORE))db.createObjectStore(STORE,{keyPath:'id'});
+    };
+    req.onsuccess=()=>{
+      const db=req.result;
+      db.onversionchange=()=>{db.close();dbPromise=null};   /* otra pestaña subió la versión: reabrir en la próxima llamada */
+      resolve(db);
+    };
+    req.onerror=()=>reject(req.error);
+    req.onblocked=()=>reject(new Error('BarrasDB bloqueada por otra pestaña'));
+  });
+  dbPromise.catch(()=>{dbPromise=null});                   /* permite reintentar si falló */
+  return dbPromise;
+}
+
+/* Ejecuta una operación y resuelve recién cuando la transacción terminó (dato ya persistido) */
+function tx(modo,fn){
+  return abrirDB().then(db=>new Promise((resolve,reject)=>{
+    const t=db.transaction(STORE,modo);
+    const req=fn(t.objectStore(STORE));
+    let result;
+    if(req)req.onsuccess=()=>{result=req.result};
+    t.oncomplete=()=>resolve(result);
+    t.onerror=()=>reject(t.error);
+    t.onabort=()=>reject(t.error||new Error('Transacción abortada'));
+  }));
+}
+
+/* Todos los registros {id, data}, en orden de creación (data.at) */
+async function colaGet(){
+  const items=await tx('readonly',s=>s.getAll());
+  return (items||[]).sort((a,b)=>(a.data?.at||0)-(b.data?.at||0));
+}
+/* Agrega o reemplaza un registro {id, data} */
+async function colaPut(item){await tx('readwrite',s=>{s.put({id:item.id,data:item.data})})}
+/* Elimina un registro por id */
+async function colaDelete(id){await tx('readwrite',s=>{s.delete(id)})}
+/* Reemplazo total (misma firma que el colaSet(array) anterior) */
+async function colaSet(arr){
+  await tx('readwrite',s=>{s.clear();for(const it of arr)s.put({id:it.id,data:it.data})});
+}
+/* Migración única: pasa lo que haya quedado en localStorage a IndexedDB */
+async function migrarColaLocalStorage(){
+  let viejo=[];
+  try{viejo=JSON.parse(localStorage.getItem('bf_cola')||'[]')}catch(e){}
+  if(!viejo.length)return;
+  await tx('readwrite',s=>{for(const it of viejo)s.put({id:it.id,data:it.data})});
+  try{localStorage.removeItem('bf_cola')}catch(e){}
+}
+
+/* idbOk=false: IndexedDB falló en este celular, la cola sigue solo en memoria (S.cola) hasta recargar */
+let idbOk=true;
+async function colaRefrescar(){
+  if(idbOk){try{S.cola=await colaGet()}catch(e){idbOk=false}}
+  recomputar();
+}
+async function colaLeer(){
+  if(idbOk){try{return await colaGet()}catch(e){idbOk=false}}
+  return [...S.cola];
+}
+async function colaGuardar(item){            /* put en IndexedDB + espejo en memoria */
+  if(idbOk){try{await colaPut(item)}catch(e){idbOk=false}}
+  S.cola=[...S.cola.filter(x=>x.id!==item.id),item];
+}
+async function colaQuitar(id){               /* delete en IndexedDB + espejo en memoria */
+  if(idbOk){try{await colaDelete(id)}catch(e){idbOk=false}}
+  S.cola=S.cola.filter(x=>x.id!==id);
+}
+
+function recomputar(){const ids=new Set(S.movsDb.map(m=>m.id)),cola=new Map(S.cola.map(c=>[c.id,c.data]));
+  /* si la venta está en el servidor y también en la cola local, manda lo marcado en el celular (ej: "Entregado" sin señal) */
+  S.movs=S.movsDb.map(m=>{const c=cola.get(m.id);return c&&c.entregado&&!m.entregado?{...m,entregado:true,entregadoPor:c.entregadoPor}:m})
+    .concat(S.cola.filter(c=>!ids.has(c.id)&&c.data.evento===S.config.evento).map(c=>({id:c.id,...c.data,_cola:true})));sched()}
+let subiendo=false,fallas=0;
+async function vaciarCola(){if(subiendo||!S.db||!S.cola.length)return;subiendo=true;
+  try{for(const it of await colaLeer()){
+    try{const ref=S.db.doc('movs/'+it.id);
+      await Promise.race([ref.set(it.data),new Promise((_,r)=>setTimeout(()=>r({code:'timeout'}),8000))]);
+      const cur=(await colaLeer()).find(x=>x.id===it.id);
+      if(!cur)await ref.delete();                                   /* se deshizo mientras subía */
+      else if(cur.data.entregado!==it.data.entregado)await ref.set(cur.data); /* se marcó entregado mientras subía */
+      await colaQuitar(it.id);fallas=0}
+    catch(e){fallas++;if(e&&e.code==='permission-denied')toast('No tenés permiso para guardar ventas. Revisá cómo te compartieron la app.',true);break}}}
+  finally{subiendo=false;await colaRefrescar()}}
+setInterval(vaciarCola,8000);addEventListener('online',vaciarCola);
+setInterval(()=>{if(S.tab==='comandas'||S.tab==='vender')sched()},20000);
+async function sha(s){const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode('barras:'+s));return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('')}
+
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const money=n=>'$ '+Math.round(n||0).toLocaleString('es-AR');
+const pct=n=>isFinite(n)?Math.round(n*100)+'%':'–';
+const slug=s=>String(s).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,40)||('x'+Date.now());
+const prod=id=>S.productos.find(p=>p.id===id)||{id,nombre:(S.config.productosBorrados||{})[id]||id,precio:0,costo:0,categoria:'otro',minimo:0,borrado:true};
+const activos=()=>S.productos.filter(p=>p.activo!==false);
+const barraNom=id=>id==='deposito'?'Depósito':(S.barras.find(b=>b.id===id)||{nombre:id}).nombre;
+
+let tt;function toast(msg,err){const t=$('#toast');t.textContent=msg;t.className='toast'+(err?' err':'');t.hidden=false;clearTimeout(tt);tt=setTimeout(()=>t.hidden=true,2600)}
+
+/* ---------- cálculos ---------- */
+function stockAll(){
+  const st={deposito:{}};S.barras.forEach(b=>st[b.id]={});
+  const add=(l,p,q)=>{(st[l]||(st[l]={}))[p]=(st[l][p]||0)+q};
+  for(const m of S.movs)for(const x of m.lineas||[]){const q=+x.q||0;
+    if(m.tipo==='compra')add('deposito',x.p,q);
+    else if(m.tipo==='carga'){add('deposito',x.p,-q);add(m.barra,x.p,q)}
+    else if(m.tipo==='devolucion'){add(m.barra,x.p,-q);add('deposito',x.p,q)}
+    else if(m.tipo==='venta'||m.tipo==='baja')add(m.barra,x.p,-q)}
+  return st}
+function cierreCalc(b){
+  const c=S.cierres[b];const r={};const g=p=>r[p]||(r[p]={recibido:0,vendido:0,bajas:0});
+  for(const m of S.movs){if(m.barra!==b)continue;for(const x of m.lineas||[]){const q=+x.q||0;
+    if(m.tipo==='carga')g(x.p).recibido+=q;
+    else if(m.tipo==='devolucion'&&!m.post_cierre)g(x.p).recibido-=q;
+    else if(m.tipo==='venta')g(x.p).vendido+=q;
+    else if(m.tipo==='baja')g(x.p).bajas+=q}}
+  if(c)Object.keys(c.conteo||{}).forEach(g);
+  const filas=Object.entries(r).map(([p,v])=>{const esperado=v.recibido-v.vendido-v.bajas;const contado=c?(+((c.conteo||{})[p])||0):null;
+    return {p,...v,esperado,contado,dif:c?contado-esperado:null}}).sort((a,b)=>(prod(a.p).orden??99)-(prod(b.p).orden??99));
+  const ventas=S.movs.filter(m=>m.tipo==='venta'&&m.barra===b);
+  const porPago={};ventas.forEach(m=>porPago[m.pago]=(porPago[m.pago]||0)+(+m.total||0));
+  return {filas,porPago,efEsperado:porPago.efectivo||0,efContado:c?+c.efectivo||0:null}}
+
+/* ---------- render ---------- */
+let rq=false,dirty=false;
+function sched(){if(rq)return;rq=true;requestAnimationFrame(()=>{rq=false;const a=document.activeElement;
+  if(a&&a.closest&&a.closest('#main,#modal')&&/INPUT|SELECT/.test(a.tagName)){dirty=true;return}render()})}
+document.addEventListener('focusout',()=>setTimeout(()=>{if(dirty){dirty=false;sched()}},50));
+
+function render(){
+  const rol=rolActual();const ok=permitidas();
+  if(!ok.includes(S.tab))S.tab=ok[0];
+  if(rol==='encargado')S.loginAbierto=false;
+  const cargando=esperandoConfig();
+  $('#nav').hidden=cargando||rol!=='encargado';                     /* el cajero no ve la barra de pestañas */
+  document.querySelectorAll('#nav button').forEach(b=>{b.setAttribute('aria-current',b.dataset.tab===S.tab?'page':'false');b.hidden=!ok.includes(b.dataset.tab)});
+  const rp=$('#rolPill'),rb=$('#rolBtn');
+  rp.hidden=rb.hidden=cargando||!pinEnc();
+  rp.textContent=NOMBRE_ROL[rol];rp.className='pill '+(rol==='encargado'?'ok':'warn');
+  rb.textContent=rol==='encargado'?'Salir a Cajero':'Encargado';rb.dataset.act=rol==='encargado'?'salir':'abrirLogin';
+  $('.evento').hidden=cargando||rol!=='encargado';
+  if(rol!=='encargado'){S.evModal=false;S.borrarProd=null}
+  const md=S.ready&&!cargando&&(S.auth||S.borrarProd||S.evModal);
+  $('#modal').innerHTML=!md?'':S.auth?vAuth():S.borrarProd?vBorrarProd():vEventos();document.body.style.overflow=md?'hidden':'';
+  if(S.auth){const i=$('#authPin');if(i&&document.activeElement!==i)i.focus()}
+  const net=$('#net');const off=!navigator.onLine;
+  if(S.cola.length||off){net.hidden=false;net.className='pill '+(off?'bad':'warn');net.textContent=off?`Sin internet${S.cola.length?' · '+S.cola.length+' por subir':''}`:`Subiendo ${S.cola.length} venta${S.cola.length>1?'s':''}…`}else net.hidden=true;
+  const ev=$('#evSel');ev.innerHTML=S.eventos.length?S.eventos.map(e=>`<option value="${esc(e.id)}"${e.id===S.config.evento?' selected':''}>${esc(e.nombre)}</option>`).join(''):'<option>Sin eventos</option>';
+  ev.disabled=!S.canWrite||!S.eventos.length||rol!=='encargado';
+  if(!S.ready){return}
+  if(esperandoConfig()){$('#main').innerHTML='<div class="empty">Cargando…</div>';return}
+  if(S.loginAbierto){$('#main').innerHTML=vLogin();const i=$('#pinIn');if(i&&document.activeElement!==i)i.focus();return}
+  let h='';
+  if(!S.db)h+=`<div class="banner">No se pudo cargar la base de datos. Revisá la conexión y recargá la página.</div>`;
+  else if(S.db&&!S.productos.length&&S.tab!=='ajustes')h+=`<div class="banner">${rol==='encargado'?'La base está vacía. Andá a Ajustes y tocá “Cargar datos iniciales”.':'Todavía no hay bebidas cargadas. Pedile al encargado que prepare la app.'}</div>`;
+  if(S.db&&S.productos.length&&!S.config.evento&&S.tab!=='ajustes')h+=`<div class="banner">${rol==='encargado'?'Elegí o creá un evento en Ajustes para empezar.':'No hay un evento activo. Pedile al encargado que lo elija.'}</div>`;
+  if(S.eventosOk&&S.config.evento&&S.eventos.length&&!S.eventos.some(e=>e.id===S.config.evento))
+    h+=`<div class="banner">${rol==='encargado'?'El evento activo ya no existe. Elegí otro en Ajustes → Eventos.':'El evento activo ya no existe. Pedile al encargado que elija otro.'}</div>`;
+  h+=({vender:vVender,comandas:vComandas,stock:vStock,cierre:vCierre,panel:vPanel,ajustes:vAjustes}[S.tab]||vVender)();
+  $('#main').innerHTML=h}
+
+/* Selector de barra: un <select> igual al de cajeros, alimentado por las barras de Ajustes */
+function selBarra(id,cur,txt='Elegí la barra'){
+  if(!S.barras.length)return `<select class="f" id="${id}" style="width:100%" disabled><option>Sin barras cargadas</option></select>`;
+  return `<select class="f" id="${id}" style="width:100%"><option value="">${txt}</option>${S.barras.map(b=>`<option value="${esc(b.id)}"${b.id===cur?' selected':''}>${esc(b.nombre)}</option>`).join('')}</select>`}
+
+function vLogin(){
+  const espera=Math.ceil((S.esperarHasta-Date.now())/1000);
+  return `<form class="login" id="loginForm" autocomplete="off">
+    <h2>Ingresar como Encargado</h2>
+    <p>Acceso total: pedidos, stock, cierre, panel y ajustes.</p>
+    <label for="pinIn" class="label">PIN del encargado</label>
+    <input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="8" id="pinIn" value="${esc(S.pinIn)}" ${espera>0?'disabled':''}>
+    ${espera>0?`<p style="color:var(--bad)">Demasiados intentos. Esperá ${espera} segundos.</p>`:''}
+    <button type="submit" class="btn pri" ${espera>0?'disabled':''}>Entrar</button>
+    <button type="button" class="btn ghost" data-act="cerrarLogin">Volver a Vender</button>
+  </form>`}
+
+function vVender(){
+  if(!S.barras.length)return S.productos.length?`<div class="empty">Todavía no hay barras.${rolActual()==='encargado'?' Creá la primera en Ajustes.':''}</div>`:'';
+  const evAct=S.eventos.find(e=>e.id===S.config.evento);
+  const evTxt=evAct?`<div class="label" style="margin-bottom:10px">Evento · <b style="color:var(--accent)">${esc(evAct.nombre)}</b></div>`:'';
+  /* Vender exige sesión de cajero: nombre + barra + clave */
+  const cs=cajSesionValida();
+  if(!cs)return evTxt+vCajLogin();
+  S.quien=cs.nombre;S.barra=cs.barra;
+  if(cs.rol==='bartender')return evTxt+`<div class="cajbar"><span>Bartender <b>${esc(cs.nombre)}</b> · ${esc(barraNom(cs.barra))}</span><button class="btn ghost" data-act="cajSalir">Cerrar sesión</button></div><div class="empty" style="margin-top:14px">Los bartenders no venden: su pantalla es Comandas.</div>`;
+  const st=stockAll()[S.barra]||{};
+  let h=`${evTxt}<div class="cajbar"><span>Cajero <b>${esc(cs.nombre)}</b> · ${esc(barraNom(cs.barra))}</span><button class="btn ghost" data-act="cajSalir">Cerrar sesión</button></div>`;
+  const ps=activos();
+  const sinPrecio=ps.filter(p=>!(+p.precio>0)).length;
+  if(sinPrecio)h+=`<div class="banner" style="margin-top:14px">${sinPrecio} producto${sinPrecio>1?'s':''} sin precio${rolActual()==='encargado'?'. Cargalos en Ajustes para poder venderlos.':': el encargado tiene que cargarlos.'}</div>`;
+  if(ps.length&&!ps.some(p=>(st[p.id]||0)>0))h+=`<div class="banner" style="margin-top:14px">${esc(barraNom(S.barra))} todavía no tiene stock en este evento.${rolActual()==='encargado'?' Cargalo en Stock → Enviar a barra.':' Pedile al encargado que envíe la mercadería.'}</div>`;
+  h+=`<div class="pos"><div class="grid">`;
+  for(const p of ps){const s=st[p.id]||0;const q=S.ticket[p.id]||0;const np=!(+p.precio>0);
+    const queda=s-q;                                              /* stock después del pedido en curso */
+    const cls=(np?'noprice ':'')+(queda<=0?'out':(queda<=(+p.minimo||0)?'low':''));   /* precio y stock se marcan por separado */
+    h+=`<button class="prod ${cls}${q?' sel':''}" style="--cat:${(CATS[p.categoria]||CATS.otro).c}" data-act="add" data-v="${esc(p.id)}" ${S.canWrite&&S.db?'':'disabled'}>
+      ${q?`<span class="q num">${q}</span>`:''}<span class="n">${esc(p.nombre)}</span>
+      <span class="pie"><span class="p num">${np?'Sin precio':money(p.precio)}</span>
+      <span class="stk num" aria-label="Stock disponible">${q?`<s>${s}</s> → `:''}<b>${Math.max(queda,0)}</b><small>${queda<=0?'sin stock':'en stock'}</small></span></span></button>`}
+  h+=`</div><aside class="ticket" id="ticket" aria-label="Pedido actual"><h3>Pedido</h3>`;
+  const lines=Object.entries(S.ticket).filter(([,q])=>q>0);
+  if(!lines.length)h+=`<p style="color:var(--muted);margin:6px 0 0">Tocá las bebidas para sumarlas.</p>`;
+  for(const [id,q] of lines){const p=prod(id);h+=`<div class="tl"><span class="nm">${esc(p.nombre)}</span><button data-act="minus" data-v="${esc(id)}" aria-label="Quitar uno">−</button><span class="num" style="width:24px;text-align:center">${q}</span><button data-act="add" data-v="${esc(id)}" aria-label="Sumar uno">+</button><span class="num" style="width:90px;text-align:right">${money(q*(+p.precio||0))}</span></div>`}
+  const tot=lines.reduce((s,[id,q])=>s+q*(+prod(id).precio||0),0);
+  h+=`<div class="total"><span class="label">Total</span><b class="num">${money(tot)}</b></div>
+    <div class="label" style="margin-bottom:8px">Cobrar con</div>
+    <div class="pays">${PAGOS.map(([k,n,c])=>`<button class="${c}" data-act="cobrar" data-v="${k}" ${lines.length?'':'disabled'}>${n}</button>`).join('')}</div>`;
+  if(lines.length)h+=`<button class="btn ghost" data-act="limpiar" style="width:100%;margin-top:8px">Vaciar pedido</button>`;
+  if(S.last&&Date.now()-S.last.at<30000)h+=`<div class="undo"><span>Pedido <b>${esc(S.last.numero)}</b> · ${money(S.last.total)} · ${esc(S.last.pago)}</span><button class="btn" data-act="deshacer">Deshacer</button></div>`;
+  const pend=S.movs.filter(m=>m.tipo==='venta'&&m.barra===S.barra&&m.entregado===false).sort((a,b)=>(a.at||0)-(b.at||0));
+  h+=`<h3 style="margin-top:18px">Para entregar${pend.length?` · ${pend.length}`:''}</h3>`;
+  if(!pend.length)h+=`<p style="color:var(--muted);margin:0;font-size:14px">Sin pedidos pendientes. Cuando cobrás, el pedido aparece acá hasta que lo marques entregado.</p>`;
+  for(const m of pend.slice(0,10))h+=`<div class="tl"><span class="nm"><b>${esc(m.numero||'')}</b> <span style="color:var(--muted)">${hora(m.at)}</span><br><span style="font-size:14px">${(m.lineas||[]).map(x=>esc(x.q+' '+prod(x.p).nombre)).join(', ')}</span></span><button class="btn" style="width:auto;height:auto;padding:8px 10px" data-act="entregado" data-v="${esc(m.id)}">Entregado</button></div>`;
+  h+=`</aside></div>`;
+  /* celular: barra fija con el total para llegar al cobro sin buscarlo */
+  if(lines.length)h+=`<button type="button" class="mbar" onclick="document.getElementById('ticket').scrollIntoView({behavior:'smooth',block:'start'})"><span>${lines.reduce((a,[,q])=>a+q,0)} ítems</span><b class="num">${money(tot)}</b><span>Cobrar ↓</span></button>`;
+  return h}
+
+/* ---------- Comandas (KDS) ----------
+   Cada venta cobrada aparece acá en tiempo real como tarjeta. El bartender toca "Entregado" y desaparece.
+   Bartender: ve solo su barra. Encargado: elige la barra o mira todas. */
+let audioCtx=null;
+function desbloquearAudio(){try{audioCtx=audioCtx||new (window.AudioContext||window.webkitAudioContext)();audioCtx.resume()}catch(e){}}
+function avisoComanda(){
+  try{navigator.vibrate&&navigator.vibrate([120,60,120])}catch(e){}
+  try{if(!audioCtx)return;const o=audioCtx.createOscillator(),g=audioCtx.createGain();o.type='sine';o.frequency.value=880;
+    g.gain.setValueAtTime(.0001,audioCtx.currentTime);g.gain.exponentialRampToValueAtTime(.25,audioCtx.currentTime+.02);g.gain.exponentialRampToValueAtTime(.0001,audioCtx.currentTime+.35);
+    o.connect(g).connect(audioCtx.destination);o.start();o.stop(audioCtx.currentTime+.4)}catch(e){}}
+function vComandas(){
+  if(!S.barras.length)return `<div class="empty">Todavía no hay barras.</div>`;
+  const rol=rolActual();let h='',barra;
+  if(rol==='bartender'){const cs=cajSesionValida();barra=cs.barra;S.quien=cs.nombre;
+    h+=`<div class="cajbar"><span>Bartender <b>${esc(cs.nombre)}</b> · ${esc(barraNom(barra))}</span><button class="btn ghost" data-act="cajSalir">Cerrar sesión</button></div>`}
+  else{barra=S.comBarra||'';
+    h+=`<label for="comBarraSel" style="display:block;max-width:320px"><div class="label">Comandas de</div><select class="f" id="comBarraSel" style="width:100%"><option value="">Todas las barras</option>${S.barras.map(b=>`<option value="${esc(b.id)}"${b.id===barra?' selected':''}>${esc(b.nombre)}</option>`).join('')}</select></label>`}
+  const pend=S.movs.filter(m=>m.tipo==='venta'&&m.entregado===false&&(!barra||m.barra===barra)).sort((a,b)=>(a.at||0)-(b.at||0));
+  /* aviso (vibración + sonido) cuando entra una comanda nueva */
+  const ids=new Set(pend.map(m=>m.id));
+  if(S.vistas&&rol==='bartender'&&pend.some(m=>!S.vistas.has(m.id)))avisoComanda();
+  S.vistas=ids;
+  h+=`<div class="comhead"><h2>Comandas</h2><span class="pill ${pend.length?'warn':'ok'}">${pend.length?pend.length+' por preparar':'Todo entregado'}</span></div>`;
+  if(!pend.length)return h+`<div class="empty">No hay comandas pendientes. Cuando un cajero cobra, el pedido aparece acá al instante.</div>`;
+  h+=`<div class="peds">`;
+  for(const m of pend){const seg=Math.floor((Date.now()-(m.at||Date.now()))/1000),min=Math.floor(seg/60);
+    h+=`<article class="ped${min>=5?' late':''}${seg<20?' nuevo':''}" aria-label="Comanda ${esc(m.numero||'')}">
+      <div class="phead"><div class="nro num">${esc(m.numero||'')}</div><div class="meta"><b>${esc(m.quien||'')}</b><span>${barra?'':esc(barraNom(m.barra))+' · '}${min<1?'recién':min+' min'}</span></div></div>
+      <ul class="it">${(m.lineas||[]).map(x=>`<li><b class="num">${x.q}×</b> ${esc(prod(x.p).nombre)}</li>`).join('')}</ul>
+      <button class="entregar" data-act="entregado" data-v="${esc(m.id)}">Entregado</button></article>`}
+  return h+`</div>`}
+
+function vStock(){
+  if(!S.config.evento)return '';
+  const st=stockAll();const locs=['deposito',...S.barras.map(b=>b.id)];const ps=activos();
+  let h=`<section><h2>Stock en vivo</h2><div class="tw"><table><thead><tr><th>Producto</th>${locs.map(l=>`<th>${esc(barraNom(l))}</th>`).join('')}<th>Total</th></tr></thead><tbody>`;
+  for(const p of ps){let t=0;h+=`<tr><td><span class="dot" style="--cat:${(CATS[p.categoria]||CATS.otro).c}"></span>${esc(p.nombre)}</td>`;
+    for(const l of locs){const v=(st[l]||{})[p.id]||0;t+=v;const cls=l!=='deposito'&&v<=0?'out':(l!=='deposito'&&v<=(+p.minimo||0)?'low':'');h+=`<td class="${cls}">${v}</td>`}
+    h+=`<td><b>${t}</b></td></tr>`}
+  h+=`</tbody></table></div><p class="label" style="margin-top:8px">Naranja: en el mínimo o por debajo · Rojo: sin stock</p></section>`;
+  const t=S.movTipo;
+  h+=`<section><h2>Registrar movimiento</h2><div class="seg">${Object.entries(TIPOS).map(([k,n])=>`<button data-act="movTipo" data-v="${k}" aria-pressed="${k===t}">${n}</button>`).join('')}</div>
+   <div class="row" style="margin-top:12px">`;
+  if(t==='compra')h+=`<label style="flex:1 1 240px"><div class="label">Proveedor</div><input type="text" id="proveedor" value="${esc(S.proveedor)}" placeholder="Ej: Distribuidora" style="width:100%"></label>`;
+  else h+=`<label for="movBarraSel" style="flex:0 1 260px"><div class="label">${t==='carga'?'A qué barra':'Desde qué barra'}</div>${selBarra('movBarraSel',S.movBarra)}</label>`;
+  if(t==='baja')h+=`<div><div class="label">Motivo</div><div class="seg">${MOTIVOS.map(m=>`<button data-act="motivo" data-v="${m}" aria-pressed="${m===S.motivo}">${m}</button>`).join('')}</div></div>`;
+  h+=`</div><div class="qtylist">${ps.map(p=>`<label class="qi"><span class="nm">${esc(p.nombre)}</span><input type="number" min="0" step="1" inputmode="numeric" id="mq-${esc(p.id)}" data-mq="${esc(p.id)}" value="${S.movQty[p.id]||''}" placeholder="0"></label>`).join('')}</div>
+   <div class="row" style="margin-top:12px"><button class="btn pri" data-act="registrar" ${S.canWrite&&S.db?'':'disabled'}>Registrar ${esc(TIPOS[t].toLowerCase())}</button><button class="btn ghost" data-act="limpiarMov">Limpiar cantidades</button></div></section>`;
+  const rec=S.movs.filter(m=>m.tipo!=='venta').sort((a,b)=>(b.at||0)-(a.at||0)).slice(0,20);
+  h+=`<section><h2>Últimos movimientos</h2>`;
+  if(!rec.length)h+=`<div class="empty">Todavía no hay compras, envíos ni bajas en este evento. Arrancá cargando lo que compraste con “Compra al depósito”.</div>`;
+  else{h+=`<div class="tw"><table><thead><tr><th>Hora</th><th>Tipo</th><th>Dónde</th><th>Detalle</th><th>Quién</th><th></th></tr></thead><tbody>`;
+    for(const m of rec)h+=`<tr><td>${hora(m.at)}</td><td style="text-align:left">${esc(TIPOS[m.tipo]||m.tipo)}${m.motivo?' · '+esc(m.motivo):''}${m.post_cierre?' · sobrante':''}</td><td style="text-align:left">${esc(m.tipo==='compra'?(m.proveedor||'Depósito'):m.tipo==='anulacion'?(m.barra||''):barraNom(m.barra))}</td><td style="text-align:left;white-space:normal;min-width:180px">${m.tipo==='anulacion'?esc(m.detalle||''):(m.lineas||[]).map(x=>esc(x.q+' '+prod(x.p).nombre)).join(', ')}</td><td style="text-align:left">${esc(m.quien||'')}</td><td>${m.tipo==='anulacion'?'':`<button class="btn ghost danger" data-act="anular" data-v="${esc(m.id)}">Anular</button>`}</td></tr>`;
+    h+=`</tbody></table></div>`}
+  return h+`</section>`}
+const hora=t=>t?new Date(t).toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'}):'';
+
+function vCierre(){
+  if(!S.config.evento)return '';
+  if(!S.barras.length)return `<div class="empty">No hay barras.</div>`;
+  const b=S.cierreBarra;
+  let h=`<label for="cierreBarraSel" style="display:block;max-width:320px"><div class="label">Barra a cerrar</div>${selBarra('cierreBarraSel',b)}</label>`;
+  if(!b)return h+`<div class="empty" style="margin-top:14px">Elegí la barra que querés cerrar.</div>`;
+  const c=S.cierres[b];const k=cierreCalc(b);
+  if(!c||S.rehacer){
+    const ids=new Set(k.filas.map(f=>f.p));const ps=activos().filter(p=>ids.has(p.id));
+    h+=`<section style="margin-top:16px"><h2>Conteo de ${esc(barraNom(b))}</h2>
+      <div class="banner" style="border-left-color:var(--accent)">Contá lo que quedó sin mirar el sistema. Las diferencias aparecen recién cuando guardás.</div>`;
+    if(!ps.length)h+=`<div class="empty">Esta barra no recibió mercadería en este evento.</div>`;
+    else h+=`<div class="qtylist">${ps.map(p=>`<label class="qi"><span class="nm">${esc(p.nombre)}</span><input type="number" min="0" step="1" inputmode="numeric" id="cq-${esc(p.id)}" data-cq="${esc(p.id)}" value="${S.conteo[p.id]??''}" placeholder="0"></label>`).join('')}</div>`;
+    h+=`<div class="row" style="margin-top:14px"><label style="flex:0 1 260px"><div class="label">Efectivo contado en caja ($)</div><input type="number" min="0" step="100" inputmode="numeric" id="efectivo" value="${esc(S.efectivo)}" placeholder="0"></label></div>
+      <div class="row" style="margin-top:14px"><button class="btn pri" data-act="cerrar" ${S.canWrite&&S.db&&ps.length?'':'disabled'}>Cerrar barra y ver diferencias</button>${S.rehacer?'<button class="btn ghost" data-act="cancelarRehacer">Cancelar</button>':''}</div></section>`;
+    return h}
+  const faltan=k.filas.filter(f=>f.dif<0);const sobran=k.filas.filter(f=>f.dif>0);
+  const ventaPerdida=faltan.reduce((s,f)=>s+(-f.dif)*(+prod(f.p).precio||0),0);
+  const difEf=k.efContado-k.efEsperado;
+  h+=`<section style="margin-top:16px"><h2>Cierre de ${esc(barraNom(b))}</h2><p style="color:var(--muted);margin-top:-4px">Cerrado a las ${hora(c.at)}${c.quien?' por '+esc(c.quien):''}.</p>
+   <div class="kpis"><div class="kpi"><small>Stock</small><b>${faltan.length||sobran.length?`<span class="pill ${faltan.length?'bad':'warn'}">${faltan.length?faltan.length+' con faltante':''}${faltan.length&&sobran.length?' · ':''}${sobran.length?sobran.length+' con sobrante':''}</span>`:'<span class="pill ok">Cierra perfecto</span>'}</b></div>
+   <div class="kpi"><small>Venta perdida por faltantes</small><b class="num">${money(ventaPerdida)}</b></div>
+   <div class="kpi"><small>Efectivo: diferencia</small><b class="num" style="color:${difEf<0?'var(--bad)':difEf>0?'var(--warn)':'var(--good)'}">${difEf>0?'+':''}${money(difEf).replace('$ -','−$ ')}</b></div></div>
+   <h3 style="margin-top:18px">Stock</h3><div class="tw"><table><thead><tr><th>Producto</th><th>Recibió</th><th>Vendió</th><th>Bajas</th><th>Debería quedar</th><th>Contado</th><th>Diferencia</th></tr></thead><tbody>
+   ${k.filas.map(f=>`<tr><td>${esc(prod(f.p).nombre)}</td><td>${f.recibido}</td><td>${f.vendido}</td><td>${f.bajas}</td><td>${f.esperado}</td><td>${f.contado}</td><td class="${f.dif<0?'neg':f.dif>0?'pos':'ok'}">${f.dif>0?'+':''}${f.dif}</td></tr>`).join('')}</tbody></table></div>
+   <h3 style="margin-top:18px">Caja</h3><div class="tw"><table><thead><tr><th>Medio</th><th>Según sistema</th><th>Contado</th><th>Diferencia</th></tr></thead><tbody>
+   <tr><td>Efectivo</td><td>${money(k.efEsperado)}</td><td>${money(k.efContado)}</td><td class="${difEf<0?'neg':difEf>0?'pos':'ok'}">${money(difEf)}</td></tr>
+   ${PAGOS.slice(1).map(([p,n])=>`<tr><td>${n}</td><td>${money(k.porPago[p]||0)}</td><td colspan="2" style="color:var(--muted);text-align:left">Controlar contra el resumen de Mercado Pago o del posnet</td></tr>`).join('')}
+   </tbody></table></div>
+   <div class="row" style="margin-top:14px">${c.devuelto?'<span class="pill ok">Sobrante devuelto al depósito</span>':`<button class="btn pri" data-act="devolverSobrante" ${S.canWrite&&S.db?'':'disabled'}>Devolver lo contado al depósito</button>`}<button class="btn ghost" data-act="rehacer">Rehacer conteo</button></div></section>`;
+  return h}
+
+function vPanel(){
+  if(!S.config.evento)return '';
+  const ventas=S.movs.filter(m=>m.tipo==='venta');
+  const ex=S.dl?`<div class="row" style="justify-content:flex-end;margin-bottom:12px"><button class="btn" data-act="exportar" ${S.exportando||!S.movs.length?'disabled':''}>${S.exportando?'Armando el Excel…':'Exportar a Excel'}</button></div>`:'';
+  if(!ventas.length)return ex+`<div class="empty">Cuando empiecen las ventas, acá vas a ver facturación, ganancia, ranking y stock crítico en vivo.</div>`+vSesiones()+vEliminaciones();
+  const pre=ex;
+  let fact=0,cmv=0;const porP={},porB={},porPago={},porQ={};
+  for(const m of ventas){fact+=+m.total||0;porPago[m.pago]=(porPago[m.pago]||0)+(+m.total||0);
+    const b=porB[m.barra]||(porB[m.barra]={f:0,n:0});b.f+=+m.total||0;b.n++;
+    const q=porQ[m.quien||'Sin nombre']||(porQ[m.quien||'Sin nombre']={f:0,n:0});q.f+=+m.total||0;q.n++;
+    for(const x of m.lineas||[]){const c=(+x.q||0)*(+x.costo||0);cmv+=c;const p=porP[x.p]||(porP[x.p]={u:0,f:0,c:0});p.u+=+x.q||0;p.f+=(+x.q||0)*(+x.precio||0);p.c+=c}}
+  let bajas=0;S.movs.filter(m=>m.tipo==='baja').forEach(m=>(m.lineas||[]).forEach(x=>bajas+=(+x.q||0)*(+prod(x.p).costo||0)));
+  let falt=0;Object.keys(S.cierres).forEach(b=>cierreCalc(b).filas.forEach(f=>{if(f.dif<0)falt+=(-f.dif)*(+prod(f.p).costo||0)}));
+  const gan=fact-cmv-bajas-falt;const sinCosto=activos().some(p=>!(+p.costo>0));
+  let h=pre+`<div class="kpis"><div class="kpi"><small>Facturación</small><b class="num">${money(fact)}</b></div>
+   <div class="kpi"><small>Ganancia bruta</small><b class="num">${money(gan)}</b><small>Margen ${pct(gan/fact)}</small></div>
+   <div class="kpi"><small>Ventas</small><b class="num">${ventas.length}</b><small>Ticket promedio ${money(fact/ventas.length)}</small></div>
+   <div class="kpi"><small>Bajas + faltantes (al costo)</small><b class="num">${money(bajas+falt)}</b></div></div>`;
+  if(sinCosto)h+=`<div class="banner" style="margin-top:12px">Hay productos sin costo cargado: la ganancia sale más alta de lo real. Completalos en Ajustes.</div>`;
+  const maxB=Math.max(...Object.values(porB).map(x=>x.f),1),maxP=Math.max(...Object.values(porPago),1);
+  h+=`<div class="cols" style="margin-top:16px"><div class="card"><h3>Por barra</h3><div class="bars">${S.barras.map(b=>{const x=porB[b.id]||{f:0,n:0};return `<div class="bar"><span>${esc(b.nombre)}</span><span class="tr"><i style="width:${x.f/maxB*100}%"></i></span><span class="num">${money(x.f)} · ${x.n}</span></div>`}).join('')}</div></div>
+   <div class="card"><h3>Medios de pago</h3><div class="bars">${[...new Set([...PAGOS.map(x=>x[0]),...Object.keys(porPago)])].map(k=>[k,nombrePago(k)]).map(([k,n])=>`<div class="bar"><span>${n}</span><span class="tr"><i style="width:${(porPago[k]||0)/maxP*100}%"></i></span><span class="num">${money(porPago[k]||0)} · ${pct((porPago[k]||0)/fact)}</span></div>`).join('')}</div></div></div>`;
+  const rk=Object.entries(porP).sort((a,b)=>(b[1].f-b[1].c)-(a[1].f-a[1].c));
+  h+=`<section><h2>Productos</h2><div class="tw"><table><thead><tr><th>Producto</th><th>Unidades</th><th>Facturación</th><th>Ganancia</th><th>Margen</th></tr></thead><tbody>${rk.map(([id,x])=>`<tr><td><span class="dot" style="--cat:${(CATS[prod(id).categoria]||CATS.otro).c}"></span>${esc(prod(id).nombre)}</td><td>${x.u}</td><td>${money(x.f)}</td><td>${money(x.f-x.c)}</td><td>${pct((x.f-x.c)/x.f)}</td></tr>`).join('')}</tbody></table></div></section>`;
+  const st=stockAll();const crit=[];
+  for(const b of S.barras)for(const p of activos()){const v=(st[b.id]||{})[p.id];if(v!==undefined&&v<=(+p.minimo||0))crit.push([b,p,v])}
+  h+=`<div class="cols" style="margin-top:28px"><div class="card"><h3>Stock crítico</h3>${crit.length?`<div class="tw"><table><tbody>${crit.map(([b,p,v])=>`<tr><td>${esc(p.nombre)} · ${esc(b.nombre)}</td><td class="${v<=0?'out':'low'}">${v<=0?'Sin stock':'Quedan '+v}</td></tr>`).join('')}</tbody></table></div>`:'<p style="color:var(--muted);margin:0">Nada por debajo del mínimo.</p>'}</div>
+   <div class="card"><h3>Por cajero</h3><div class="tw"><table><thead><tr><th>Nombre</th><th>Ventas</th><th>Facturación</th></tr></thead><tbody>${Object.entries(porQ).sort((a,b)=>b[1].f-a[1].f).map(([n,x])=>`<tr><td>${esc(n)}</td><td>${x.n}</td><td>${money(x.f)}</td></tr>`).join('')}</tbody></table></div></div></div>`;
+  h+=vSesiones()+vEliminaciones();
+  return h}
+
+/* Historial de sesiones de cajeros del evento (lo mismo que va a la hoja 'sesiones' del Excel) */
+function vSesiones(){
+  const l=[...S.sesiones].reverse();
+  return `<section><h2>Sesiones de cajeros${l.length?` · ${l.length}`:''}</h2>${l.length?`<div class="tw"><table><thead><tr><th>Fecha</th><th>Hora</th><th>Cajero</th><th>Barra</th><th>Tipo</th></tr></thead><tbody>${l.map(x=>`<tr><td>${esc(x.fecha||'')}</td><td>${esc(x.hora||'')}</td><td style="text-align:left">${esc(x.cajero||'')}</td><td style="text-align:left">${esc(x.barraNombre||'')}</td><td style="text-align:left">${x.tipo==='salida'?'Cierre':'Inicio'}</td></tr>`).join('')}</tbody></table></div>`:'<p style="color:var(--muted);margin:0">Todavía nadie inició sesión en este evento.</p>'}</section>`}
+
+/* Registro de eliminaciones autorizadas con PIN (se ve en el Panel aunque no haya ventas) */
+function vEliminaciones(){
+  const elim=S.movs.filter(m=>m.tipo==='anulacion').sort((a,b)=>(b.at||0)-(a.at||0));
+  return `<section><h2>Eliminaciones autorizadas${elim.length?` · ${elim.length}`:''}</h2>${elim.length?`<div class="tw"><table><thead><tr><th>Hora</th><th>Barra</th><th>Cajero</th><th>Qué se eliminó</th></tr></thead><tbody>${elim.map(m=>`<tr><td>${hora(m.at)}</td><td style="text-align:left">${esc(m.barra||'')}</td><td style="text-align:left">${esc(m.quien||'')}</td><td style="text-align:left;white-space:normal">${esc(m.detalle||'')}</td></tr>`).join('')}</tbody></table></div>`:'<p style="color:var(--muted);margin:0">Ninguna en este evento.</p>'}</section>`;}
+
+/* Ventana flotante de eventos: activar, crear, editar y eliminar */
+function vEventos(){
+  const dis=S.canWrite&&S.db?'':'disabled';
+  return `<div class="modal-bg" data-act="cerrarEventos"></div>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="evTit">
+   <div class="modal-head"><h2 id="evTit">Eventos</h2><button class="btn ghost" data-act="cerrarEventos" aria-label="Cerrar">✕</button></div>
+   <p style="color:var(--muted);margin:0 0 12px">Tocá un evento para activarlo en todos los celulares. Cada evento tiene su propio stock, ventas, pedidos y cierres.</p>
+   <div class="evlist">${S.eventos.map(e=>{const on=e.id===S.config.evento;
+     if(S.editEv===e.id)return `<div class="evrow on"><input type="text" id="editEvNombre" value="${esc(S.editEvNombre)}" maxlength="40" style="flex:1 1 200px" aria-label="Nuevo nombre del evento">
+       <button class="btn pri" data-act="guardarEv" data-v="${esc(e.id)}" ${dis}>Guardar</button><button class="btn ghost" data-act="cancelarEv">Cancelar</button></div>`;
+     return `<div class="evrow${on?' on':''}"><button class="evname" data-act="setEvento" data-v="${esc(e.id)}" ${dis} aria-pressed="${on}"><span class="radio"></span>${esc(e.nombre)}</button>
+       ${on?'<span class="pill ok">Activo</span>':''}
+       <span class="evacts"><button class="btn ghost" data-act="editarEv" data-v="${esc(e.id)}" ${dis}>Editar</button><button class="btn ghost danger" data-act="borrarEv" data-v="${esc(e.id)}" ${dis}>Eliminar</button></span></div>`}).join('')||'<div class="empty">Todavía no hay eventos.</div>'}</div>
+   <div class="row" style="margin-top:12px"><input type="text" id="nuevoEv" value="${esc(S.nuevoEv)}" placeholder="Nombre del evento nuevo" maxlength="40" style="flex:1 1 200px"><button class="btn" data-act="crearEv" ${dis}>Crear evento</button></div>
+  </div>`}
+
+/* Confirmación rápida para borrar un producto del catálogo */
+function vBorrarProd(){const b=S.borrarProd;
+  return `<div class="modal-bg" data-act="cancelarBorrarProd"></div>
+  <div class="modal" role="alertdialog" aria-modal="true" aria-labelledby="bpTit" style="max-width:420px">
+   <div class="modal-head"><h2 id="bpTit">Borrar producto</h2></div>
+   <p style="margin:0 0 6px;font-size:17px">¿Seguro que querés borrar <b>${esc(b.nombre)}</b>?</p>
+   <p style="margin:0 0 16px;color:var(--muted);font-size:14px">Se elimina de la base de datos y de todas las barras.${b.enBarras?` Todavía ${b.enBarras===1?'figura':'figuran'} <b style="color:var(--warn)">${b.enBarras} ${b.enBarras===1?'unidad':'unidades'}</b> en stock.`:''}${b.vendidas?` ${b.vendidas===1?'La unidad vendida':`Las ${b.vendidas} unidades vendidas`} en este evento ${b.vendidas===1?'sigue':'siguen'} contando en el Panel y el Excel.`:''} Si solo querés sacarlo de la venta, destildá “Activo”.</p>
+   <div class="row"><button class="btn danger-fill" data-act="confirmarBorrarProd" style="flex:1">Sí, borrar</button><button class="btn ghost" data-act="cancelarBorrarProd">Cancelar</button></div>
+  </div>`}
+
+function vAjustes(){
+  const dis=S.canWrite&&S.db?'':'disabled';
+  let h='';
+  if(S.db&&!S.productos.length&&!S.barras.length)h+=`<section><h2>Base vacía</h2><p style="color:var(--muted);margin-top:-4px">Carga las 12 bebidas con sus precios y costos, los dos lados de barra y los eventos del 24 y el 31. Se hace una sola vez.</p>
+   <button class="btn pri" data-act="seed" ${dis}>Cargar datos iniciales</button></section>`;
+  const evAct=S.eventos.find(e=>e.id===S.config.evento);
+  h+=`<section><h2>Eventos</h2>
+   <div class="row"><span>Activo: <b style="color:var(--accent)">${evAct?esc(evAct.nombre):'ninguno'}</b> · ${S.eventos.length} evento${S.eventos.length===1?'':'s'}</span>
+   <button class="btn pri" data-act="abrirEventos" ${dis}>Gestionar eventos</button></div></section>`;
+  h+=`<section><h2>Productos y precios</h2><p style="color:var(--muted);margin-top:-4px">Los cambios se guardan solos y llegan a todas las barras al instante. El costo sirve para calcular la ganancia; el bartender no lo ve.</p>
+   <div class="tw"><table><thead><tr><th>Producto</th><th>Tipo</th><th>Precio venta ($)</th><th>Costo ($)</th><th>Mínimo</th><th>Activo</th><th><span class="sr">Borrar</span></th></tr></thead><tbody>
+   ${S.productos.map(p=>`<tr><td><input class="wide" type="text" id="pn-${esc(p.id)}" data-pf="nombre" data-pid="${esc(p.id)}" value="${esc(p.nombre)}" ${dis}></td>
+     <td><select class="f" id="pc-${esc(p.id)}" data-pf="categoria" data-pid="${esc(p.id)}" ${dis}>${Object.entries(CATS).map(([k,c])=>`<option value="${k}"${k===p.categoria?' selected':''}>${c.n}</option>`).join('')}</select></td>
+     <td><input type="number" min="0" step="100" id="pp-${esc(p.id)}" data-pf="precio" data-pid="${esc(p.id)}" value="${+p.precio||''}" placeholder="0" ${dis}></td>
+     <td><input type="number" min="0" step="100" id="pk-${esc(p.id)}" data-pf="costo" data-pid="${esc(p.id)}" value="${+p.costo||''}" placeholder="0" ${dis}></td>
+     <td><input type="number" min="0" step="1" id="pm-${esc(p.id)}" data-pf="minimo" data-pid="${esc(p.id)}" value="${+p.minimo||0}" style="width:70px" ${dis}></td>
+     <td style="text-align:center"><input type="checkbox" id="pa-${esc(p.id)}" data-pf="activo" data-pid="${esc(p.id)}" ${p.activo!==false?'checked':''} ${dis} aria-label="Activo"></td>
+     <td><button class="btn ghost danger trash" data-act="borrarProd" data-v="${esc(p.id)}" ${dis} aria-label="Borrar ${esc(p.nombre)}" title="Borrar producto">
+       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg>Borrar</button></td></tr>`).join('')}
+   </tbody></table></div><div class="row" style="margin-top:10px"><button class="btn" data-act="nuevoProd" ${dis}>Agregar producto</button></div></section>`;
+  h+=`<section><h2>Acceso</h2>
+   <p style="color:var(--muted);margin-top:-4px">Hay dos perfiles. <b>Cajero</b>: la app abre así por defecto, fija en Vender. <b>Encargado</b>: con este PIN, acceso total.</p>
+   <div class="card"><h3>PIN de encargado ${S.config.pinHash?'<span class="pill ok">Activo</span>':'<span class="pill warn">Sin PIN: todos entran como Encargado</span>'}</h3>
+     <p style="color:var(--muted);margin:0 0 10px;font-size:14px">${S.config.pinHash?'Los celulares abren como Cajero. Para entrar como Encargado tocá “Encargado” arriba.':'Activalo antes de darles los celulares a los cajeros.'} Son 4 números.</p>
+     <div class="row"><input type="password" inputmode="numeric" id="pinNuevo" value="${esc(S.pinNuevo)}" placeholder="4 números" maxlength="4" style="width:160px" ${dis}><button class="btn" data-act="guardarPin" ${dis}>${S.config.pinHash?'Cambiar PIN':'Activar PIN'}</button></div></div>
+   </section>`;
+  const nAl=urlsAlerta('x').length;
+  h+=`<section><h2>Alertas automáticas</h2>
+   <p style="color:var(--muted);margin-top:-4px">Se mandan solas, sin que nadie toque nada: cuando un cajero inicia sesión y cuando alguien pide eliminar algo.</p>
+   <div class="row">${nAl?`<span class="pill ok">Activas · ${ALERTAS.proveedor==='telegram'?'Telegram':'CallMeBot'} · ${nAl} destinatario${nAl>1?'s':''}</span>`:'<span class="pill warn">Sin configurar: completá ALERTAS en el código (index.html)</span>'}
+   <button class="btn" data-act="probarAlerta" ${dis}>Enviar alerta de prueba</button></div></section>`;
+  /* Cajeros: tabla Nombre / Clave de acceso. El lápiz pasa a modo edición (agregar, editar, eliminar). */
+  const ed=S.cajEdit;
+  h+=`<section><div class="sechead"><h2>Personal</h2><button class="btn ghost icon${ed?' on':''}" data-act="cajEditar" aria-pressed="${ed}" aria-label="${ed?'Terminar de editar personal':'Editar personal'}" title="${ed?'Listo':'Editar'}" ${dis}>
+     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button></div>
+   <p style="color:var(--muted);margin-top:-4px"><b>Cajeros</b> entran a Vender y <b>bartenders</b> a Comandas, con su nombre, su barra y su clave. La clave se guarda cifrada: si alguien la olvida, poné una nueva.</p>
+   ${S.cajeros.length||ed?`<div class="tw"><table class="cajtab"><thead><tr><th>Nombre</th><th>Rol</th><th>Clave de acceso</th>${ed?'<th></th>':'<th>Pedidos</th>'}</tr></thead><tbody>
+   ${S.cajeros.map(c=>{const e=S.cajEd[c.id]||{};return ed
+     ?`<tr><td><input type="text" id="cn-${esc(c.id)}" data-cn="${esc(c.id)}" value="${esc(e.nombre??c.nombre)}" maxlength="30" aria-label="Nombre"></td>
+        <td><select class="f" id="cr-${esc(c.id)}" data-cr="${esc(c.id)}" aria-label="Rol">${Object.entries(ROLES_PERSONAL).map(([k,n])=>`<option value="${k}"${(e.rol??c.rol??'cajero')===k?' selected':''}>${n}</option>`).join('')}</select></td>
+        <td><input type="password" inputmode="numeric" id="ck-${esc(c.id)}" data-ck="${esc(c.id)}" value="${esc(e.clave||'')}" maxlength="8" placeholder="${c.claveHash?'Nueva clave (vacío = igual)':'Sin clave: cargá una'}" aria-label="Clave de acceso"></td>
+        <td><span class="evacts"><button class="btn" data-act="cajGuardar" data-v="${esc(c.id)}">Guardar</button><button class="btn ghost danger" data-act="borrarCajero" data-v="${esc(c.id)}">Eliminar</button></span></td></tr>`
+     :`<tr><td>${esc(c.nombre)}</td><td><span class="pill rol-${c.rol||'cajero'}">${ROLES_PERSONAL[c.rol||'cajero']}</span></td><td style="text-align:left">${c.claveHash?'<span class="pill ok">•••• configurada</span>':'<span class="pill warn">Sin clave</span>'}</td><td style="text-align:left"><span class="pill">${esc(c.codigo||'')}-</span></td></tr>`}).join('')}
+   ${ed?`<tr class="nuevo"><td><input type="text" id="nuevoCajNombre" value="${esc(S.cajNuevo.nombre)}" maxlength="30" placeholder="Nombre"></td>
+        <td><select class="f" id="nuevoCajRol" aria-label="Rol">${Object.entries(ROLES_PERSONAL).map(([k,n])=>`<option value="${k}"${S.cajNuevo.rol===k?' selected':''}>${n}</option>`).join('')}</select></td>
+        <td><input type="password" inputmode="numeric" id="nuevoCajClave" value="${esc(S.cajNuevo.clave)}" maxlength="8" placeholder="Clave (4 a 8 números)"></td>
+        <td><button class="btn pri" data-act="agregarCajero">Agregar</button></td></tr>`:''}
+   </tbody></table></div>`:`<div class="empty">Todavía no hay cajeros ni bartenders. Tocá el lápiz para agregar el primero.</div>`}</section>`;
+  h+=`<section><h2>Barras</h2><div class="qtylist">${S.barras.map(b=>`<label class="qi"><input type="text" id="bn-${esc(b.id)}" data-bid="${esc(b.id)}" value="${esc(b.nombre)}" style="flex:1;width:auto" ${dis}></label>`).join('')}</div>
+   <div class="row" style="margin-top:10px"><button class="btn" data-act="nuevaBarra" ${dis}>Agregar barra</button></div></section>`;
+  return h}
+
+/* ---------- acciones ---------- */
+async function w(fn,ok){try{await fn();if(ok)toast(ok)}catch(e){console.error(e);toast(e&&e.code==='permission-denied'?'No tenés permiso para guardar cambios. Revisá las reglas de Firestore.':e&&e.code==='resource-exhausted'?'Se alcanzó el límite de uso de Firebase.':'No se pudo guardar. Revisá la conexión y probá de nuevo.',true)}}
+const evId=()=>S.config.evento;
+function lineasDe(map){return Object.entries(map).map(([p,q])=>({p,q:Math.floor(+q||0)})).filter(x=>x.q>0)}
+
+const ACT={
+  setBarra:v=>{S.barra=v;ls('barra',v);S.ticket={}},
+  add:v=>{const p=prod(v);if(!(+p.precio>0)){toast(p.nombre+' no tiene precio.',true);return}
+    const s=(stockAll()[S.barra]||{})[v]||0;S.ticket[v]=(S.ticket[v]||0)+1;
+    if(S.ticket[v]>s)toast(`Ojo: ${p.nombre} figura con ${Math.max(s,0)} en stock en esta barra.`,true)},   /* avisa pero no frena la venta */
+  minus:v=>{if(!S.ticket[v])return;
+    pedirAutorizacion(`Quitar 1 ${prod(v).nombre} del pedido`,S.barra,()=>{S.ticket[v]=Math.max(0,(S.ticket[v]||0)-1);if(!S.ticket[v])delete S.ticket[v]})},
+  limpiar:()=>{const n=Object.values(S.ticket).reduce((a,b)=>a+b,0);if(!n)return;
+    pedirAutorizacion(`Vaciar el pedido (${n} ${n===1?'ítem':'ítems'})`,S.barra,()=>{S.ticket={}})},
+  cobrar:async v=>{
+    if(!S.db||!evId()){toast('Elegí un evento en Ajustes.',true);return}
+    const lineas=Object.entries(S.ticket).filter(([,q])=>q>0).map(([p,q])=>{const x=prod(p);return {p,q,precio:+x.precio||0,costo:+x.costo||0}});
+    if(!lineas.length)return;
+    const cs=cajSesionValida();const caj=cs&&S.cajeros.find(c=>c.id===cs.id);
+    if(!caj)return toast('Iniciá sesión de cajero para cobrar.',true);
+    const total=lineas.reduce((s,x)=>s+x.q*x.precio,0);
+    const id=S.db.collection('movs').doc().id;
+    const ck='num_'+evId();const n=(+ls(ck)||0)+1;ls(ck,n);
+    const numero=(caj.codigo||caj.nombre[0].toUpperCase())+'-'+n;
+    const data={evento:evId(),tipo:'venta',barra:S.barra,lineas,total,pago:v,numero,entregado:false,quien:caj.nombre,cajeroId:caj.id,at:Date.now()};
+    const item={id,data};
+    /* Vaciamos el pedido antes del await para que un doble toque no cobre dos veces */
+    S.last={id,at:Date.now(),total,numero,pago:nombrePago(v)};S.ticket={};
+    if(idbOk){
+      try{await colaPut(item);await colaRefrescar()}
+      catch(e){idbOk=false;S.cola=[...S.cola.filter(x=>x.id!==id),item];recomputar()}  /* fallback: cola en memoria */
+    }else{S.cola=[...S.cola.filter(x=>x.id!==id),item];recomputar()}
+    render();setTimeout(sched,30500);
+    vaciarCola()},
+  entregado:async v=>{const c=await colaLeer();const it=c.find(x=>x.id===v);
+    const por=S.quien||(rolActual()==='encargado'?'Encargado':'');
+    if(it){await colaGuardar({id:it.id,data:{...it.data,entregado:true,entregadoAt:Date.now(),entregadoPor:por}});await colaRefrescar();
+      S.db.doc('movs/'+v).update({entregado:true,entregadoAt:Date.now(),entregadoPor:por}).catch(()=>{});   /* si ya estaba en Firestore, también */
+      return}
+    S.movsDb=S.movsDb.map(m=>m.id===v?{...m,entregado:true}:m);recomputar();     /* desaparece al instante */
+    w(()=>S.db.doc('movs/'+v).update({entregado:true,entregadoAt:Date.now(),entregadoPor:por}))},
+  deshacer:()=>{const l=S.last;if(!l)return;
+    pedirAutorizacion(`Anular la venta ${l.numero} (${money(l.total)})`,S.barra,()=>anularVenta(l))},
+  abrirLogin:()=>{S.loginAbierto=true;S.pinIn='';window.scrollTo(0,0)},
+  cerrarLogin:()=>{S.loginAbierto=false;S.pinIn=''},
+  entrar:async()=>{
+    if(Date.now()<S.esperarHasta)return;
+    const h=await sha(S.pinIn.trim());S.pinIn='';
+    if(h!==pinEnc()){S.fallos++;if(S.fallos>=5){S.fallos=0;S.esperarHasta=Date.now()+30000;setTimeout(sched,30500)}
+      return toast('PIN incorrecto.',true)}
+    S.fallos=0;guardarSesion({rol:'encargado',k:h});S.loginAbierto=false;toast('Entraste como Encargado')},
+  salir:()=>{guardarSesion(null);S.tab='vender';ls('tab','vender');S.pinIn='';window.scrollTo(0,0);toast('Modo Cajero: solo Vender')},
+  guardarPin:async()=>{const p=S.pinNuevo.trim();if(!/^\d{4}$/.test(p))return toast('El PIN de encargado tiene que tener 4 números.',true);
+    const h=await sha(p);
+    S.config={...S.config,pinHash:h};ls('pinHash',h);guardarSesion({rol:'encargado',k:h});S.pinNuevo='';toast('PIN de encargado guardado');
+    w(()=>S.db.doc('config/main').set({pinHash:h},{merge:true}))},
+  exportar:()=>exportar(),
+  seed:async()=>{
+    if(S.productos.length||S.barras.length)return toast('La base ya tiene datos.',true);
+    const P=[
+      ['absolut','Absolut','spirit',55000,22000,3],['skyy','Skyy','spirit',0,0,3],['ciroc','Cîroc Raspberry','spirit',145000,58000,2],
+      ['jager','Jägermeister 700','spirit',67500,26999,3],['baronb','Baron B','espumante',80000,32500,3],['chandon','Chandon','espumante',40000,16000,3],
+      ['corona','Corona 330','cerveza',8000,3150,24],['heineken','Heineken 330','cerveza',6000,2400,24],['agua','Agua','sin_alcohol',0,0,12],
+      ['coca','Coca-Cola','sin_alcohol',0,0,12],['sprite','Sprite','sin_alcohol',0,0,12],['speed','Speed','sin_alcohol',3000,1090,24]];
+    await w(async()=>{const b=S.db.batch();
+      P.forEach(([id,nombre,categoria,precio,costo,minimo],i)=>b.set(S.db.doc('productos/'+id),{nombre,categoria,precio,costo,minimo,activo:true,orden:i+1}));
+      b.set(S.db.doc('barras/barra-1'),{nombre:'Lado izquierdo',orden:1});
+      b.set(S.db.doc('barras/barra-2'),{nombre:'Lado derecho',orden:2});
+      b.set(S.db.doc('eventos/24-dic'),{nombre:'24 de diciembre',creado:1});
+      b.set(S.db.doc('eventos/31-dic'),{nombre:'31 de diciembre',creado:2});
+      b.set(S.db.doc('config/main'),{evento:'24-dic'});
+      await b.commit()},'Datos iniciales cargados')},
+  movTipo:v=>{S.movTipo=v},movBarra:v=>{S.movBarra=v},motivo:v=>{S.motivo=v},
+  limpiarMov:()=>{S.movQty={}},
+  registrar:async()=>{
+    const t=S.movTipo;const lineas=lineasDe(S.movQty);
+    if(!evId())return toast('Elegí un evento en Ajustes.',true);
+    if(t!=='compra'&&!S.movBarra)return toast('Elegí la barra.',true);
+    if(!lineas.length)return toast('Cargá al menos una cantidad.',true);
+    const doc={evento:evId(),tipo:t,lineas,quien:autor(),at:Date.now()};
+    if(t==='compra')doc.proveedor=S.proveedor.trim();else doc.barra=S.movBarra;
+    if(t==='baja')doc.motivo=S.motivo;
+    await w(()=>S.db.collection('movs').add(doc),'Registrado: '+TIPOS[t].toLowerCase());S.movQty={}},
+  anular:v=>{const m=S.movs.find(x=>x.id===v);if(!m)return;
+    const det=`Anular ${(TIPOS[m.tipo]||m.tipo).toLowerCase()}: ${(m.lineas||[]).map(x=>x.q+' '+prod(x.p).nombre).join(', ')}`;
+    pedirAutorizacion(det,m.barra||'deposito',()=>w(()=>S.db.doc('movs/'+v).delete(),'Movimiento anulado'))},
+  authCancel:()=>{S.auth=null;S.authPin='';toast('Eliminación cancelada')},
+  borrarProd:v=>{const p=S.productos.find(x=>x.id===v);if(!p)return;
+    const enBarras=Object.entries(stockAll()).reduce((t,[,st])=>t+Math.max(0,st[v]||0),0);
+    const vendidas=S.movs.filter(m=>m.tipo==='venta').reduce((t,m)=>t+(m.lineas||[]).filter(x=>x.p===v).reduce((a,x)=>a+x.q,0),0);
+    S.borrarProd={id:v,nombre:p.nombre,enBarras,vendidas}},
+  cancelarBorrarProd:()=>{S.borrarProd=null},
+  confirmarBorrarProd:()=>{const b=S.borrarProd;if(!b)return;S.borrarProd=null;
+    /* se guarda solo el nombre para que las ventas viejas lo sigan mostrando en Panel y Excel */
+    const borrados={...(S.config.productosBorrados||{}),[b.id]:b.nombre};
+    S.config={...S.config,productosBorrados:borrados};
+    S.productos=S.productos.filter(p=>p.id!==b.id);delete S.ticket[b.id];
+    toast('Producto borrado: '+b.nombre);
+    w(()=>S.db.doc('config/main').set({productosBorrados:borrados},{merge:true}));
+    w(()=>S.db.doc('productos/'+b.id).delete())},
+  cierreBarra:v=>{S.cierreBarra=v;S.conteo={};S.efectivo='';S.rehacer=false},
+  cerrar:async()=>{const b=S.cierreBarra;const conteo={};Object.entries(S.conteo).forEach(([p,q])=>{const n=Math.floor(+q||0);if(n>0)conteo[p]=n});
+    await w(()=>S.db.doc(`cierres/${evId()}_${b}`).set({evento:evId(),barra:b,conteo,efectivo:+S.efectivo||0,quien:autor(),at:Date.now(),devuelto:false}),'Barra cerrada');S.rehacer=false},
+  rehacer:()=>{const c=S.cierres[S.cierreBarra];S.rehacer=true;S.conteo={...(c&&c.conteo||{})};S.efectivo=c?String(c.efectivo||''):''},
+  cancelarRehacer:()=>{S.rehacer=false},
+  devolverSobrante:async()=>{const b=S.cierreBarra;const c=S.cierres[b];const lineas=lineasDe(c.conteo||{});
+    await w(async()=>{if(lineas.length)await S.db.collection('movs').add({evento:evId(),tipo:'devolucion',barra:b,lineas,post_cierre:true,quien:autor(),at:Date.now()});await S.db.doc(`cierres/${evId()}_${b}`).update({devuelto:true})},'Sobrante devuelto al depósito')},
+  abrirEventos:()=>{S.evModal=true;S.editEv='';S.borrarEvInfo=null},
+  cerrarEventos:()=>{S.evModal=false;S.editEv='';S.nuevoEv='';S.borrarEvInfo=null},
+  setEvento:v=>cambiarEvento(v),
+  crearEv:()=>{const n=S.nuevoEv.trim().replace(/\s+/g,' ');if(!n)return toast('Poné un nombre para el evento.',true);
+    if(S.eventos.some(e=>e.nombre.toLowerCase()===n.toLowerCase()))return toast('Ya hay un evento con ese nombre.',true);
+    let id=slug(n);if(S.eventos.some(e=>e.id===id))id+='-'+Date.now().toString(36);   /* nunca pisar un evento existente */
+    S.nuevoEv='';
+    w(()=>S.db.doc('eventos/'+id).set({nombre:n,creado:Date.now()}));
+    cambiarEvento(id,n)},
+  editarEv:v=>{const e=S.eventos.find(x=>x.id===v);if(!e)return;S.editEv=v;S.editEvNombre=e.nombre;S.borrarEvInfo=null},
+  cancelarEv:()=>{S.editEv='';S.editEvNombre=''},
+  guardarEv:v=>{const n=S.editEvNombre.trim().replace(/\s+/g,' ');if(!n)return toast('El nombre no puede quedar vacío.',true);
+    if(S.eventos.some(e=>e.id!==v&&e.nombre.toLowerCase()===n.toLowerCase()))return toast('Ya hay un evento con ese nombre.',true);
+    S.editEv='';S.editEvNombre='';toast('Evento renombrado: '+n);
+    w(()=>S.db.doc('eventos/'+v).update({nombre:n}))},
+  borrarEv:async v=>{const e=S.eventos.find(x=>x.id===v);if(!e)return;
+    if(S.eventos.length<2)return toast('Tiene que quedar al menos un evento. Creá otro antes de borrar este.',true);
+    const info=S.borrarEvInfo;
+    if(!info||info.id!==v||Date.now()-info.at>8000){            /* primer toque: contar lo que se borraría */
+      let movs,cierres;
+      try{[movs,cierres]=await Promise.all([S.db.collection('movs').where('evento','==',v).get(),S.db.collection('cierres').where('evento','==',v).get()])}
+      catch(err){return toast('No se pudo revisar el evento. Probá de nuevo con conexión.',true)}
+      S.borrarEvInfo={id:v,at:Date.now(),refs:[...movs.docs,...cierres.docs].map(d=>d.ref)};
+      return toast(movs.size?`“${e.nombre}” tiene ${movs.size} ${movs.size===1?'registro':'registros'} de ventas o stock. Tocá Eliminar de nuevo para borrar todo.`:`Tocá Eliminar de nuevo para borrar “${e.nombre}”.`)}
+    S.borrarEvInfo=null;
+    if(v===S.config.evento)cambiarEvento(S.eventos.find(x=>x.id!==v).id);
+    const refs=[...info.refs,S.db.doc('eventos/'+v)];
+    for(let i=0;i<refs.length;i+=400){const b=S.db.batch();refs.slice(i,i+400).forEach(r=>b.delete(r));w(()=>b.commit())}
+    toast('Evento eliminado: '+e.nombre)},
+  nuevoProd:async()=>{const id='p'+Date.now().toString(36);await w(()=>S.db.doc('productos/'+id).set({nombre:'Producto nuevo',categoria:'otro',precio:0,costo:0,minimo:0,activo:true,orden:S.productos.length+1}),'Producto agregado al final de la lista')},
+  cajEditar:()=>{S.cajEdit=!S.cajEdit;S.cajEd={};S.cajNuevo={nombre:'',clave:'',rol:'cajero'}},
+  agregarCajero:async()=>{
+    const nombre=S.cajNuevo.nombre.trim().replace(/\s+/g,' '),clave=S.cajNuevo.clave.trim();
+    if(!nombre)return toast('Escribí el nombre del cajero.',true);
+    if(S.cajeros.some(c=>c.nombre.toLowerCase()===nombre.toLowerCase()))return toast('Ese cajero ya está en la lista.',true);
+    if(!/^\d{4,8}$/.test(clave))return toast('La clave tiene que tener entre 4 y 8 números.',true);
+    const id='c'+Date.now().toString(36),claveHash=await hashClave(id,clave);
+    const rol=S.cajNuevo.rol||'cajero';
+    S.cajNuevo={nombre:'',clave:'',rol};toast(`${ROLES_PERSONAL[rol]} agregado: ${nombre}`);
+    w(()=>S.db.doc('cajeros/'+id).set({nombre,rol,codigo:codigoCajero(nombre),claveHash,creado:Date.now()}))},
+  cajGuardar:async v=>{const c=S.cajeros.find(x=>x.id===v);if(!c)return;const e=S.cajEd[v]||{};
+    const nombre=(e.nombre??c.nombre).trim().replace(/\s+/g,' '),clave=(e.clave||'').trim(),cambios={};
+    if(!nombre)return toast('El nombre no puede quedar vacío.',true);
+    if(nombre!==c.nombre){if(S.cajeros.some(x=>x.id!==v&&x.nombre.toLowerCase()===nombre.toLowerCase()))return toast('Ya hay un cajero con ese nombre.',true);cambios.nombre=nombre}
+    if(e.rol&&e.rol!==(c.rol||'cajero'))cambios.rol=e.rol;
+    if(clave){if(!/^\d{4,8}$/.test(clave))return toast('La clave tiene que tener entre 4 y 8 números.',true);cambios.claveHash=await hashClave(v,clave)}
+    if(!Object.keys(cambios).length)return toast('No hay cambios para guardar.');
+    delete S.cajEd[v];toast(cambios.claveHash||cambios.rol?`Guardado. ${nombre} tiene que volver a iniciar sesión.`:'Actualizado: '+nombre);
+    w(()=>S.db.doc('cajeros/'+v).update(cambios))},
+  cajSalir:()=>{if(Object.keys(S.ticket).length)return toast('Tenés un pedido sin cobrar. Cobralo o pedí autorización para vaciarlo.',true);
+    cerrarCajSesion(true);toast('Sesión cerrada')},
+  probarAlerta:async()=>{if(!urlsAlerta('x').length)return toast('Primero completá ALERTAS en el código con CallMeBot o Telegram.',true);
+    const ok=await enviarAlertaAutomatica('Prueba de alertas By Elites: si te llegó este mensaje, está todo bien configurado.');
+    toast(ok?'Alerta de prueba enviada. Revisá tu celular.':'Sin conexión: la alerta se va a mandar cuando vuelva la señal.',!ok)},
+  borrarCajero:async v=>{const c=S.cajeros.find(x=>x.id===v);if(!c)return;
+    if(!confirmar('borrarCaj-'+v,'Tocá Eliminar de nuevo para sacar a '+c.nombre))return;
+    toast('Cajero eliminado: '+c.nombre);
+    w(()=>S.db.doc('cajeros/'+v).delete())},
+  nuevaBarra:async()=>{const id='b'+Date.now().toString(36);await w(()=>S.db.doc('barras/'+id).set({nombre:'Barra '+(S.barras.length+1),orden:S.barras.length+1}),'Barra agregada')}
+};
+/* ---------- Sesión de cajero ----------
+   Para vender, el cajero elige su nombre y su barra y escribe su clave.
+   La sesión queda guardada en el celular hasta que toque "Cerrar sesión"
+   (o el encargado lo elimine / le cambie la clave). */
+const hashClave=(id,clave)=>sha('cajero:'+id+':'+clave);
+function cajSesionValida(){
+  const s=S.cajSesion;if(!s)return null;
+  if(!S.cajerosOk)return {...s,nombre:s.nombre||'',rol:s.rol||'cajero'};   /* todavía cargando la lista: confiar en lo guardado */
+  const c=S.cajeros.find(x=>x.id===s.id);
+  if(!c||!c.claveHash||c.claveHash!==s.k)return null;
+  if(s.rol&&(c.rol||'cajero')!==s.rol)return null;                 /* le cambiaron el rol: vuelve a ingresar */
+  if(S.barras.length&&!S.barras.some(b=>b.id===s.barra))return null;
+  return {...s,nombre:c.nombre,rol:c.rol||'cajero'}}
+function guardarCajSesion(v){S.cajSesion=v;ls('cajSesion',v?JSON.stringify(v):'')}
+function registrarSesion(tipo,nombre,cajeroId,barra,rol){
+  const at=Date.now(),d=new Date(at);
+  if(S.db)w(()=>S.db.collection('sesiones').add({evento:evId()||'',tipo,cajeroId,cajero:nombre,rol:rol||(S.cajeros.find(c=>c.id===cajeroId)||{}).rol||'cajero',barra,barraNombre:barraNom(barra),
+    at,fecha:d.toLocaleDateString('es-AR'),hora:d.toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit',second:'2-digit'})}))}
+function cerrarCajSesion(registrar){
+  const s=S.cajSesion;
+  if(s&&registrar)registrarSesion('salida',S.quien||s.nombre||'',s.id,s.barra);
+  guardarCajSesion(null);S.quien='';S.ticket={};S.last=null;sched()}
+async function cajIngresar(){
+  if(Date.now()<S.esperarHasta)return toast('Demasiados intentos. Esperá unos segundos.',true);
+  const L=S.cajLogin,c=S.cajeros.find(x=>x.id===L.id);
+  if(!c)return toast('Elegí tu nombre.',true);
+  if(!L.barra)return toast('Elegí la barra.',true);
+  if(!c.claveHash)return toast('Ese cajero no tiene clave. Pedile al encargado que la cargue.',true);
+  const h=await hashClave(c.id,L.clave.trim());L.clave='';
+  if(h!==c.claveHash){S.fallos++;if(S.fallos>=5){S.fallos=0;S.esperarHasta=Date.now()+30000;setTimeout(sched,30500)}
+    return toast('Clave incorrecta.',true)}
+  S.fallos=0;
+  const rol=c.rol||'cajero';
+  guardarCajSesion({id:c.id,nombre:c.nombre,rol,barra:L.barra,k:h,at:Date.now()});
+  S.quien=c.nombre;S.barra=L.barra;ls('barra',L.barra);S.ticket={};S.last=null;S.vistas=null;
+  if(rolActual()!=='encargado'){S.tab=rol==='bartender'?'comandas':'vender';ls('tab',S.tab)}
+  registrarSesion('ingreso',c.nombre,c.id,L.barra,rol);                                 /* auditoría */
+  enviarAlertaAutomatica(`El ${rol==='bartender'?'bartender':'cajero'} ${c.nombre} inició sesión en la ${barraNom(L.barra)}.`);   /* alerta silenciosa */
+  desbloquearAudio();
+  toast('Sesión iniciada: '+c.nombre+' · '+ROLES_PERSONAL[rol])}
+function vCajLogin(){
+  const L=S.cajLogin,espera=Math.ceil((S.esperarHasta-Date.now())/1000);
+  if(!S.cajeros.length)return `<div class="empty">${rolActual()==='encargado'?'Cargá los cajeros y sus claves en Ajustes → Cajeros para poder vender.':'Todavía no hay cajeros habilitados. Pedile al encargado que te agregue.'}</div>`;
+  if(!S.barras.length)return `<div class="empty">Todavía no hay barras cargadas.</div>`;
+  return `<form class="login" id="cajForm" autocomplete="off">
+    <h2>Inicio de sesión</h2>
+    <p>Cajeros y bartenders: elegí tu nombre y tu barra, y escribí tu clave.</p>
+    <label for="cajNombre"><div class="label">Nombre</div><select class="f" id="cajNombre" style="width:100%"><option value="">Elegí tu nombre</option>${S.cajeros.map(c=>`<option value="${esc(c.id)}"${c.id===L.id?' selected':''}${c.claveHash?'':' disabled'}>${esc(c.nombre)} · ${ROLES_PERSONAL[c.rol||'cajero']}${c.claveHash?'':' (sin clave)'}</option>`).join('')}</select></label>
+    <label for="cajBarra"><div class="label">Barra</div>${selBarra('cajBarra',L.barra)}</label>
+    <label for="cajClave" class="label">Clave de acceso</label>
+    <input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="8" id="cajClave" value="${esc(L.clave)}" ${espera>0?'disabled':''}>
+    ${espera>0?`<p style="color:var(--bad)">Demasiados intentos. Esperá ${espera} segundos.</p>`:''}
+    <button type="submit" class="btn pri" ${espera>0?'disabled':''}>Ingresar</button>
+  </form>`}
+
+/* Prefijo único de pedidos para cada cajero: M, después MA, MAR... y si no alcanza, M2, M3 */
+function codigoCajero(nombre){
+  const usados=new Set(S.cajeros.map(c=>c.codigo));
+  const base=nombre.normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^A-Za-z]/g,'').toUpperCase()||'C';
+  for(let i=1;i<=Math.min(3,base.length);i++){const k=base.slice(0,i);if(!usados.has(k))return k}
+  for(let n=2;;n++){const k=base[0]+n;if(!usados.has(k))return k}}
+/* Quién registra movimientos de stock y cierres */
+const autor=()=>S.quien||(rolActual()==='encargado'?'Encargado':'');
+
+/* Anula una venta recién cobrada (esté todavía en la cola local o ya subida) */
+async function anularVenta(l){
+  if(S.last&&S.last.id===l.id)S.last=null;
+  const c=await colaLeer();
+  if(c.some(x=>x.id===l.id)){await colaQuitar(l.id);await colaRefrescar();
+    if(!subiendo){toast('Venta anulada');S.db.doc('movs/'+l.id).delete().catch(()=>{});return}}
+  await w(()=>S.db.doc('movs/'+l.id).delete(),'Venta anulada')}
+
+/* ---------- Autorización del encargado para eliminar ----------
+   Toda eliminación (quitar del pedido, vaciarlo, anular una venta o un movimiento de stock)
+   abre una ventana que exige el PIN de encargado. Sin el PIN correcto, no se ejecuta.
+   Al pedirla, se dispara en segundo plano una alerta automática al encargado. */
+const nombreBarra=id=>id==='deposito'?'Depósito':barraNom(id||S.barra)||'barra sin elegir';
+function pedirAutorizacion(accion,barraId,ejecutar){
+  if(!pinEnc()){ejecutar();return}                             /* puesta en marcha: todavía no hay PIN */
+  const cajero=S.quien||(rolActual()==='encargado'?'Encargado':'sin nombre'),barra=nombreBarra(barraId);
+  S.auth={accion,barra,cajero,ejecutar};S.authPin='';                          /* B) bloquea con el modal y espera */
+  enviarAlertaAutomatica(`Alerta By Elites: El cajero ${cajero} solicita eliminar un ítem en la ${barra}. Acercate a ingresar el PIN.`);   /* A) aviso inmediato */
+}
+async function autorizar(){
+  const a=S.auth;if(!a)return;
+  if(Date.now()<S.esperarHasta)return toast('Demasiados intentos. Esperá unos segundos.',true);
+  const ok=(await sha(S.authPin.trim()))===pinEnc();S.authPin='';
+  if(!ok){S.fallos++;if(S.fallos>=5){S.fallos=0;S.esperarHasta=Date.now()+30000;setTimeout(sched,30500)}
+    return toast('PIN incorrecto. No se eliminó nada.',true)}
+  S.fallos=0;S.auth=null;render();
+  /* se ejecuta sin esperar al servidor: sin señal, Firestore lo aplica en el celular y lo sube después */
+  Promise.resolve().then(a.ejecutar).catch(e=>console.error(e)).finally(sched);
+  /* registro de auditoría: queda en el evento como "Eliminación autorizada" */
+  if(S.db&&evId())w(()=>S.db.collection('movs').add({evento:evId(),tipo:'anulacion',detalle:a.accion,barra:a.barra,quien:a.cajero,at:Date.now()}));
+}
+function vAuth(){
+  const a=S.auth;
+  const espera=Math.ceil((S.esperarHasta-Date.now())/1000);
+  return `<div class="modal-bg" data-act="authCancel"></div>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="authTit">
+   <div class="modal-head"><h2 id="authTit">Autorización requerida</h2><button class="btn ghost" data-act="authCancel" aria-label="Cancelar">✕</button></div>
+   <p style="margin:0 0 4px;font-weight:600">${esc(a.accion)}</p>
+   <p style="margin:0 0 14px;color:var(--muted)">${esc(a.barra)} · Cajero: ${esc(a.cajero)}</p>
+   <form id="authForm" autocomplete="off" style="display:grid;gap:10px">
+     <label for="authPin" class="label">PIN del encargado</label>
+     <input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="8" id="authPin" placeholder="••••" value="${esc(S.authPin)}" style="font-size:26px;letter-spacing:.3em;text-align:center;padding:10px" ${espera>0?'disabled':''}>
+     ${espera>0?`<p style="color:var(--bad);margin:0">Demasiados intentos. Esperá ${espera} segundos.</p>`:''}
+     <div class="row"><button type="submit" class="btn pri" style="flex:1" ${espera>0?'disabled':''}>Autorizar y eliminar</button><button type="button" class="btn ghost" data-act="authCancel">Cancelar</button></div>
+   </form>
+   <p class="aviso">${urlsAlerta('x').length?'Se avisó automáticamente al encargado. Esperá a que se acerque a ingresar el PIN.':'Llamá al encargado: tiene que ingresar su PIN para eliminar.'}</p>
+  </div>`}
+
+let pend={};function confirmar(k,msg){if(pend[k]&&Date.now()-pend[k]<4000){delete pend[k];return true}pend[k]=Date.now();toast(msg);return false}
+
+/* Permisos: ¿este rol puede ejecutar esta acción? */
+function puede(act){const r=rolActual();return r==='encargado'||(r==='bartender'?ACT_BARTENDER:ACT_CAJERO).has(act)}
+
+document.addEventListener('click',async e=>{
+  const t=e.target.closest('[data-tab]');if(t){if(!permitidas().includes(t.dataset.tab))return;S.tab=t.dataset.tab;ls('tab',S.tab);render();window.scrollTo(0,0);return}
+  const a=e.target.closest('[data-act]');if(!a||a.disabled)return;
+  const act=a.dataset.act;
+  if(!puede(act))return toast('Esta acción es solo para el encargado.',true);
+  const f=ACT[act];if(!f)return;const r=f(a.dataset.v);render();if(r&&r.then){await r;sched()}});
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape'&&S.auth){ACT.authCancel();render();return}
+  if(e.key==='Escape'&&S.borrarProd){ACT.cancelarBorrarProd();render();return}
+  if(e.key==='Escape'&&S.evModal){ACT.cerrarEventos();render()}
+  if(e.key==='Enter'&&e.target.id==='nuevoEv'){e.preventDefault();ACT.crearEv();render()}
+  if(e.key==='Enter'&&e.target.id==='editEvNombre'&&S.editEv){e.preventDefault();ACT.guardarEv(S.editEv);render()}
+  if(e.key==='Enter'&&e.target.id==='nuevoCajClave'&&rolActual()==='encargado'){e.preventDefault();ACT.agregarCajero();render()}});
+document.addEventListener('submit',async e=>{
+  if(e.target.id==='cajForm'){e.preventDefault();const i=$('#cajClave');if(i)S.cajLogin.clave=i.value;await cajIngresar();render();return}
+  if(e.target.id==='authForm'){e.preventDefault();const i=$('#authPin');if(i)S.authPin=i.value;await autorizar();render();return}
+  if(e.target.id!=='loginForm')return;e.preventDefault();
+  const i=$('#pinIn');if(i)S.pinIn=i.value;
+  await ACT.entrar();render()});
+document.addEventListener('input',e=>{const el=e.target;
+  if(el.id==='cajNombre')S.cajLogin.id=el.value;
+  else if(el.id==='cajBarra')S.cajLogin.barra=el.value;
+  else if(el.id==='cajClave')S.cajLogin.clave=el.value;
+  else if(el.id==='nuevoCajNombre')S.cajNuevo.nombre=el.value;
+  else if(el.id==='nuevoCajClave')S.cajNuevo.clave=el.value;
+  else if(el.dataset.cn)(S.cajEd[el.dataset.cn]||(S.cajEd[el.dataset.cn]={})).nombre=el.value;
+  else if(el.dataset.ck)(S.cajEd[el.dataset.ck]||(S.cajEd[el.dataset.ck]={})).clave=el.value;
+  else if(el.dataset.cr)(S.cajEd[el.dataset.cr]||(S.cajEd[el.dataset.cr]={})).rol=el.value;
+  else if(el.id==='nuevoCajRol')S.cajNuevo.rol=el.value;
+  else if(el.id==='authPin')S.authPin=el.value;
+
+  else if(el.id==='proveedor')S.proveedor=el.value;
+  else if(el.id==='efectivo')S.efectivo=el.value;
+  else if(el.id==='nuevoEv')S.nuevoEv=el.value;
+  else if(el.id==='editEvNombre')S.editEvNombre=el.value;
+  else if(el.id==='pinIn')S.pinIn=el.value;
+  else if(el.id==='pinNuevo')S.pinNuevo=el.value;
+  else if(el.dataset.mq)S.movQty[el.dataset.mq]=el.value;
+  else if(el.dataset.cq)S.conteo[el.dataset.cq]=el.value});
+document.addEventListener('change',e=>{const el=e.target;
+  if(el.id==='barraSel'){ACT.setBarra(el.value);el.blur();render();return}                /* barra de trabajo: cajero o encargado */
+  if(rolActual()!=='encargado')return;         /* evento, productos y barras: solo encargado */
+  if(el.id==='comBarraSel'){S.comBarra=el.value;el.blur();render();return}
+  if(el.id==='movBarraSel'){ACT.movBarra(el.value);el.blur();render();return}
+  if(el.id==='cierreBarraSel'){ACT.cierreBarra(el.value);el.blur();render();return}
+  if(el.id==='evSel'){cambiarEvento(el.value);el.blur();render();return}
+  if(el.dataset.pf){const f=el.dataset.pf;let v=el.type==='checkbox'?el.checked:el.value;
+    if(['precio','costo','minimo'].includes(f))v=Math.max(0,+v||0);if(f==='nombre'&&!String(v).trim())return;
+    w(()=>S.db.doc('productos/'+el.dataset.pid).update({[f]:v}))}
+  if(el.dataset.bid&&el.value.trim())w(()=>S.db.doc('barras/'+el.dataset.bid).update({nombre:el.value.trim()}))});
+
+/* ---------- exportar a Excel ---------- */
+function cargarXLSX(){return window.XLSX?Promise.resolve():new Promise((ok,no)=>{const s=document.createElement('script');
+  s.src='https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';s.onload=ok;s.onerror=no;document.head.appendChild(s)})}
+async function exportar(){
+  if(!S.dl)return toast('Exportar no está disponible en esta pantalla.',true);
+  S.exportando=true;render();
+  try{await cargarXLSX();
+    const ev=(S.eventos.find(e=>e.id===evId())||{nombre:evId()}).nombre;
+    const fh=t=>t?new Date(t).toLocaleString('es-AR'):'';
+    const ventas=[];const otros=[];const resumen={};
+    for(const m of [...S.movs].sort((a,b)=>(a.at||0)-(b.at||0))){
+      if(m.tipo==='venta')for(const x of m.lineas||[]){ventas.push({'Fecha y hora':fh(m.at),'Lado':barraNom(m.barra),'Pedido':m.numero||'','Cajero':m.quien||'','Producto':prod(x.p).nombre,'Cantidad':x.q,'Precio':x.precio,'Subtotal':x.q*x.precio,'Costo':x.q*x.costo,'Medio de pago':nombrePago(m.pago),'Efectivo':m.pago==='efectivo'?x.q*x.precio:0,'Mercado Pago':m.pago==='mercadopago'?x.q*x.precio:0,'Tarjeta':m.pago==='tarjeta'?x.q*x.precio:0,'Entregado':m.entregado===false?'No':'Sí','Entregado por':m.entregadoPor||''});
+        const r=resumen[x.p]||(resumen[x.p]={'Producto':prod(x.p).nombre,'Unidades':0,'Facturación':0,'Costo':0});r.Unidades+=x.q;r['Facturación']+=x.q*x.precio;r.Costo+=x.q*x.costo}
+      else if(m.tipo==='anulacion')otros.push({'Fecha y hora':fh(m.at),'Tipo':TIPOS.anulacion,'Motivo':m.detalle||'','Lado / proveedor':m.barra||'','Producto':'','Cantidad':'','Quién':m.quien||''});
+      else for(const x of m.lineas||[])otros.push({'Fecha y hora':fh(m.at),'Tipo':TIPOS[m.tipo]||m.tipo,'Motivo':m.motivo||'','Lado / proveedor':m.tipo==='compra'?(m.proveedor||''):barraNom(m.barra),'Producto':prod(x.p).nombre,'Cantidad':x.q,'Quién':m.quien||''})}
+    const res=Object.values(resumen).map(r=>({...r,'Ganancia':r['Facturación']-r.Costo,'Margen':r['Facturación']?Math.round((r['Facturación']-r.Costo)/r['Facturación']*1000)/10+'%':''})).sort((a,b)=>b.Ganancia-a.Ganancia);
+    const cie=[];for(const b of Object.keys(S.cierres)){const k=cierreCalc(b);
+      for(const f of k.filas)cie.push({'Lado':barraNom(b),'Producto':prod(f.p).nombre,'Recibió':f.recibido,'Vendió':f.vendido,'Bajas':f.bajas,'Debería quedar':f.esperado,'Contado':f.contado,'Diferencia':f.dif});
+      cie.push({'Lado':barraNom(b),'Producto':'EFECTIVO','Debería quedar':k.efEsperado,'Contado':k.efContado,'Diferencia':k.efContado-k.efEsperado})}
+    const wb=XLSX.utils.book_new();
+    const hoja=(rows,n,vacio)=>XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(rows.length?rows:[{'':vacio}]),n);
+    const ses=S.sesiones.map(x=>({'Fecha':x.fecha||new Date(x.at).toLocaleDateString('es-AR'),'Hora':x.hora||new Date(x.at).toLocaleTimeString('es-AR'),'Cajero':x.cajero||'','Rol':ROLES_PERSONAL[x.rol||'cajero']||'','Barra':x.barraNombre||barraNom(x.barra),'Tipo':x.tipo==='salida'?'Cierre de sesión':'Inicio de sesión'}));
+    hoja(res,'Resumen productos','Sin ventas');hoja(ventas,'Ventas','Sin ventas');hoja(otros,'Movimientos stock','Sin movimientos');hoja(cie,'Cierres','Sin cierres');
+    /* hoja Caja: total por barra y cajero en cada medio de pago, para cuadrar */
+    const caja={};for(const m of S.movs.filter(x=>x.tipo==='venta')){const k=m.barra+'|'+(m.quien||'');
+      const r=caja[k]||(caja[k]={'Barra':barraNom(m.barra),'Cajero':m.quien||'','Ventas':0,'Efectivo':0,'Mercado Pago':0,'Tarjeta':0,'Otros':0,'Total':0});
+      const col=m.pago==='efectivo'?'Efectivo':m.pago==='mercadopago'?'Mercado Pago':m.pago==='tarjeta'?'Tarjeta':'Otros';
+      r[col]+=+m.total||0;r.Total+=+m.total||0;r.Ventas++}
+    const cajaRows=Object.values(caja).sort((a,b)=>a.Barra.localeCompare(b.Barra)||a.Cajero.localeCompare(b.Cajero));
+    if(cajaRows.length)cajaRows.push(['Ventas','Efectivo','Mercado Pago','Tarjeta','Otros','Total'].reduce((t,c)=>(t[c]=cajaRows.reduce((a,r)=>a+r[c],0),t),{'Barra':'TOTAL','Cajero':''}));
+    hoja(cajaRows,'Caja','Sin ventas');
+    hoja(ses,'sesiones','Sin sesiones');
+    const buf=XLSX.write(wb,{type:'array',bookType:'xlsx'});
+    await S.dl.save({filename:`Barras ${ev}.xlsx`,data:buf});toast('Excel listo')}
+  catch(e){if(!(e&&e.code==='declined'))toast(e&&e.message?'No se pudo exportar: '+e.message:'No se pudo armar el Excel. Revisá la conexión.',true)}
+  finally{S.exportando=false;sched()}}
+
+/* Descarga de archivos en el navegador (reemplaza la capacidad "downloads" de claude.ai) */
+const descargaLocal={save:async({filename,data})=>{
+  const blob=data instanceof Blob?data:new Blob([data],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+  const url=URL.createObjectURL(blob);const a=document.createElement('a');
+  a.href=url;a.download=filename;document.body.appendChild(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),10000);return {status:'saved'}}};
+
+/* ---------- Firebase: configuración del proyecto ---------- */
+const firebaseConfig = {
+  apiKey: "AIzaSyBwuC2p6siDTpdy-h3WPHAwQs4e8VOkRNY",
+  authDomain: "byelites-barra.firebaseapp.com",
+  projectId: "byelites-barra",
+  storageBucket: "byelites-barra.firebasestorage.app",
+  messagingSenderId: "352111424443",
+  appId: "1:352111424443:web:cca08566b47c2875b30a9e"
+};
+
+/* ---------- Alertas automáticas en segundo plano ----------
+   Completá UNA opción y poné su nombre en "proveedor". Mientras esté vacío, las alertas
+   solo se anotan en la consola del navegador (la app funciona igual).
+   Ojo: estos datos quedan visibles en el código de la página. */
+const ALERTAS = {
+  proveedor: '',                       // 'callmebot' (WhatsApp) o 'telegram'
+  callmebot: [                         // un objeto por encargado — https://www.callmebot.com
+    // { telefono: '5493731123456', apikey: '1234567' },
+  ],
+  telegram: {
+    token: '',                         // token del bot que te da @BotFather
+    chatIds: [],                       // ej: ['123456789']
+  },
+};
+function urlsAlerta(mensaje){
+  const t=encodeURIComponent(mensaje);
+  if(ALERTAS.proveedor==='callmebot')
+    return ALERTAS.callmebot.filter(x=>x.telefono&&x.apikey).map(x=>`https://api.callmebot.com/whatsapp.php?phone=${encodeURIComponent(x.telefono)}&text=${t}&apikey=${encodeURIComponent(x.apikey)}`);
+  if(ALERTAS.proveedor==='telegram'&&ALERTAS.telegram.token)
+    return ALERTAS.telegram.chatIds.map(id=>`https://api.telegram.org/bot${ALERTAS.telegram.token}/sendMessage?chat_id=${encodeURIComponent(id)}&text=${t}`);
+  return []}
+/* Envía la alerta sin mostrar nada al usuario. Si no hay señal, la guarda y la reintenta sola. */
+async function enviarAlertaAutomatica(mensaje){
+  const urls=urlsAlerta(mensaje);
+  if(!urls.length){console.info('[Alerta By Elites — sin proveedor configurado]',mensaje);return false}
+  let ok=true;
+  for(const u of urls){
+    try{await fetch(u,{method:'GET',mode:'no-cors',cache:'no-store',keepalive:true})}
+    catch(e){ok=false;alertaPendiente(u)}}
+  return ok}
+function alertaPendiente(u){try{const q=JSON.parse(ls('alertasPend')||'[]');q.push(u);ls('alertasPend',JSON.stringify(q.slice(-30)))}catch(e){}}
+async function reintentarAlertas(){
+  let q=[];try{q=JSON.parse(ls('alertasPend')||'[]')}catch(e){}
+  if(!q.length||!navigator.onLine)return;ls('alertasPend','[]');
+  for(const u of q){try{await fetch(u,{mode:'no-cors',cache:'no-store'})}catch(e){alertaPendiente(u)}}}
+addEventListener('online',reintentarAlertas);setInterval(reintentarAlertas,60000);
+
+/* ---------- datos ---------- */
+const subs={};
+function err(e){console.error(e);toast(e&&e.code==='permission-denied'?'Firestore rechazó la lectura: revisá las reglas de seguridad.':'Se cortó la conexión con la base. Recargá la página.',true)}
+function subEvento(){
+  Object.keys(subs).forEach(k=>{if(k.startsWith('ev:')){subs[k]();delete subs[k]}});
+  S.part={};S.movsDb=[];S.cierres={};S.sesiones=[];recomputar();const ev=S.config.evento;if(!ev){sched();return}
+  const merge=()=>{S.movsDb=[].concat(...Object.values(S.part));recomputar()};
+  const coll=S.db.collection('movs');
+  /* Solo filtros de igualdad: Firestore los resuelve sin crear índices compuestos.
+     Las ventas se leen por barra; cada tipo de movimiento de stock va en su propia consulta. */
+  for(const t of ['compra','carga','devolucion','baja','anulacion'])
+    subs['ev:t-'+t]=coll.where('evento','==',ev).where('tipo','==',t).onSnapshot(s=>{S.part['t-'+t]=s.docs.map(d=>({id:d.id,...d.data()}));merge()},err);
+  for(const b of S.barras)subs['ev:v-'+b.id]=coll.where('evento','==',ev).where('tipo','==','venta').where('barra','==',b.id).onSnapshot(s=>{S.part['v-'+b.id]=s.docs.map(d=>({id:d.id,...d.data()}));merge()},err);
+  subs['ev:ses']=S.db.collection('sesiones').where('evento','==',ev).onSnapshot(s=>{S.sesiones=s.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(a.at||0)-(b.at||0));sched()},err);
+  subs['ev:cierres']=S.db.collection('cierres').where('evento','==',ev).onSnapshot(s=>{S.cierres={};s.docs.forEach(d=>{const x=d.data();S.cierres[x.barra]={id:d.id,...x}});sched()},err)}
+
+let barrasKey='',evKey='';
+
+/* ---------- evento activo ----------
+   aplicarEvento: cambia el evento en pantalla al instante (limpia lo que quedó a medias y se suscribe a sus datos).
+   cambiarEvento: además lo guarda en Firebase (config/main), así todos los celulares pasan al mismo evento. */
+function aplicarEvento(id){
+  if((id||'')===evKey)return;
+  evKey=id||'';S.config={...S.config,evento:id};
+  S.ticket={};S.last=null;S.movQty={};S.conteo={};S.efectivo='';S.rehacer=false;S.cierreBarra='';
+  subEvento();sched()}
+function cambiarEvento(id,nombre){
+  if(!id||id===S.config.evento)return;
+  aplicarEvento(id);
+  toast('Evento activo: '+(nombre||(S.eventos.find(e=>e.id===id)||{}).nombre||id));
+  w(()=>S.db.doc('config/main').set({evento:id},{merge:true}))}
+(async()=>{
+  /* Arranque de la cola local: migra lo viejo de localStorage y carga lo pendiente */
+  try{await migrarColaLocalStorage()}
+  catch(e){idbOk=false;try{S.cola=JSON.parse(localStorage.getItem('bf_cola')||'[]')}catch(_){}}
+  await colaRefrescar();
+  /* ---------- Firebase ---------- */
+  let db=null;
+  try{
+    if(!firebase.apps.length)firebase.initializeApp(firebaseConfig);
+    db=firebase.firestore();
+    /* Persistencia offline nativa: guarda datos y escrituras en el celular y sincroniza al volver la conexión.
+       Falla sin romper nada si hay otra pestaña con otra versión o el navegador no la soporta. */
+    await db.enablePersistence({synchronizeTabs:true}).catch(e=>console.warn('Persistencia offline no disponible:',e.code));
+  }catch(e){console.error('No se pudo iniciar Firebase',e);db=null}
+  S.ready=true;
+  if(!db){render();return}
+  S.db=db;
+  S.dl=descargaLocal;
+  addEventListener('offline',sched);addEventListener('online',sched);setTimeout(vaciarCola,1500);
+  db.collection('cajeros').onSnapshot(s=>{
+    S.cajeros=s.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(a.creado||0)-(b.creado||0));
+    if(!s.metadata.fromCache||S.cajeros.length)S.cajerosOk=true;
+    if(S.cajerosOk&&S.cajSesion&&!cajSesionValida())cerrarCajSesion(false);   /* lo eliminaron o le cambiaron la clave: vuelve a pedir ingreso */
+    sched()},err);
+  db.collection('productos').onSnapshot(s=>{
+    const viejos=s.docs.filter(d=>d.data().categoria==='espirituosa');   /* categoría anterior: pasa a "spirit" */
+    S.productos=s.docs.map(d=>{const x=d.data();return {id:d.id,...x,categoria:x.categoria==='espirituosa'?'spirit':x.categoria}}).sort((a,b)=>(a.orden??99)-(b.orden??99));
+    if(viejos.length&&rolActual()==='encargado'){const b=db.batch();viejos.forEach(d=>b.update(d.ref,{categoria:'spirit'}));b.commit().catch(()=>{})}
+    sched()},err);
+  db.collection('eventos').onSnapshot(s=>{S.eventos=s.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(a.creado||0)-(b.creado||0));
+    if(!s.metadata.fromCache||S.eventos.length)S.eventosOk=true;sched()},err);
+  db.collection('barras').onSnapshot(s=>{S.barras=s.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(a.orden??99)-(b.orden??99));
+    if(S.barra&&!S.barras.some(b=>b.id===S.barra))S.barra='';
+    const k=S.barras.map(b=>b.id).join(',');if(k!==barrasKey){barrasKey=k;if(S.config.evento)subEvento()}sched()},err);
+  setTimeout(()=>{if(!S.cfgOk){S.cfgOk=true;sched()}},6000);   /* primera vez sin conexión: no quedar trabado en "Cargando" */
+  db.doc('config/main').onSnapshot(s=>{
+    if(!s.exists&&s.metadata.fromCache)return;     /* caché vacía al arrancar: esperar la respuesta real, no borrar el PIN guardado */
+    S.config=s.exists?{...s.data()}:{};S.cfgOk=true;
+    ls('pinHash',S.config.pinHash||'');   /* copia local: aunque abra sin internet, arranca como Cajero */
+    const ev=S.config.evento||'';if(ev!==evKey){S.config.evento=evKey;aplicarEvento(ev)}   /* otro celular cambió el evento */
+    sched()},err);
+  render()})();
+render();
+
+/* ---------- PWA: registrar el Service Worker ---------- */
+if('serviceWorker' in navigator && (location.protocol==='https:'||location.hostname==='localhost')){
+  addEventListener('load',()=>{
+    navigator.serviceWorker.register('sw.js')
+      .catch(e=>console.warn('No se pudo registrar el Service Worker',e));
+  });
+}
+</script>
+</body>
+</html>
