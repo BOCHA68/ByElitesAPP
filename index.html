@@ -1,7 +1,6 @@
 <!doctype html>
 <html lang="es">
 <head>
-  <link rel="icon" type="image/png" href="icon-192.png">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>By Elites</title>
@@ -163,7 +162,9 @@ td input.wide{width:160px;text-align:left}
 .sechead h2{margin:0}
 .btn.icon{width:42px;height:42px;padding:0;display:grid;place-items:center}
 .btn.icon.on{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
-.cajtab th,.cajtab td{text-align:left}
+.cajtab th,.cajtab td,.bartab th,.bartab td{text-align:left}
+.bartab td input{width:100%;min-width:160px;text-align:left}
+.bartab tr.nuevo td{background:var(--panel2)}
 .cajtab td input{width:100%;min-width:140px;text-align:left}
 .cajtab tr.nuevo td{background:var(--panel2)}
 .evrow{display:flex;align-items:center;gap:8px;flex-wrap:wrap;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:8px 10px}
@@ -283,7 +284,7 @@ function ls(k,v){try{if(v===undefined)return localStorage.getItem('bf_'+k);local
 const S={db:null,ready:false,canWrite:true,productos:[],barras:[],eventos:[],config:{},
   part:{},movs:[],cierres:{},tab:ls('tab')||'vender',barra:ls('barra')||'',quien:'',
   ticket:{},last:null,movTipo:'carga',movBarra:'',movQty:{},motivo:'Rota',proveedor:'',
-  cierreBarra:'',conteo:{},efectivo:'',rehacer:false,nuevoEv:'',auth:null,authPin:'',cajSesion:leerCajSesion(),cajLogin:{id:'',barra:'',clave:''},cajEdit:false,cajEd:{},cajNuevo:{nombre:'',clave:'',rol:'cajero'},sesiones:[],comBarra:'',vistas:null,evModal:false,editEv:'',editEvNombre:'',borrarEvInfo:null,eventosOk:false,cajeros:[],cajerosOk:false,
+  cierreBarra:'',conteo:{},efectivo:'',rehacer:false,nuevoEv:'',auth:null,authPin:'',cajSesion:leerCajSesion(),cajLogin:{id:'',barra:'',clave:''},cajEdit:false,cajEd:{},barEdit:false,barEd:{},barNueva:'',cajNuevo:{nombre:'',clave:'',rol:'cajero'},sesiones:[],comBarra:'',vistas:null,evModal:false,editEv:'',editEvNombre:'',borrarEvInfo:null,eventosOk:false,cajeros:[],cajerosOk:false,
   movsDb:[],cola:[],pinIn:'',pinNuevo:'',exportando:false,
   cfgOk:false,sesion:leerSesion(),loginAbierto:false,fallos:0,esperarHasta:0};
 
@@ -419,7 +420,7 @@ const pct=n=>isFinite(n)?Math.round(n*100)+'%':'–';
 const slug=s=>String(s).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,40)||('x'+Date.now());
 const prod=id=>S.productos.find(p=>p.id===id)||{id,nombre:(S.config.productosBorrados||{})[id]||id,precio:0,costo:0,categoria:'otro',minimo:0,borrado:true};
 const activos=()=>S.productos.filter(p=>p.activo!==false);
-const barraNom=id=>id==='deposito'?'Depósito':(S.barras.find(b=>b.id===id)||{nombre:id}).nombre;
+const barraNom=id=>id==='deposito'?'Depósito':(S.barras.find(b=>b.id===id)||{nombre:(S.config.barrasBorradas||{})[id]||id}).nombre;   /* barras eliminadas: conserva el nombre en el historial */
 
 let tt;function toast(msg,err){const t=$('#toast');t.textContent=msg;t.className='toast'+(err?' err':'');t.hidden=false;clearTimeout(tt);tt=setTimeout(()=>t.hidden=true,2600)}
 
@@ -748,8 +749,21 @@ function vAjustes(){
         <td><input type="password" inputmode="numeric" id="nuevoCajClave" value="${esc(S.cajNuevo.clave)}" maxlength="8" placeholder="Clave (4 a 8 números)"></td>
         <td><button class="btn pri" data-act="agregarCajero">Agregar</button></td></tr>`:''}
    </tbody></table></div>`:`<div class="empty">Todavía no hay cajeros ni bartenders. Tocá el lápiz para agregar el primero.</div>`}</section>`;
-  h+=`<section><h2>Barras</h2><div class="qtylist">${S.barras.map(b=>`<label class="qi"><input type="text" id="bn-${esc(b.id)}" data-bid="${esc(b.id)}" value="${esc(b.nombre)}" style="flex:1;width:auto" ${dis}></label>`).join('')}</div>
-   <div class="row" style="margin-top:10px"><button class="btn" data-act="nuevaBarra" ${dis}>Agregar barra</button></div></section>`;
+  /* Barras: mismo sistema que Personal. El lápiz pasa a modo edición (agregar, editar, eliminar). */
+  const bed=S.barEdit,stB=stockAll();
+  const unid=id=>Object.values(stB[id]||{}).reduce((a,q)=>a+Math.max(0,q),0);
+  h+=`<section><div class="sechead"><h2>Barras</h2><button class="btn ghost icon${bed?' on':''}" data-act="barEditar" aria-pressed="${bed}" aria-label="${bed?'Terminar de editar barras':'Editar barras'}" title="${bed?'Listo':'Editar'}" ${dis}>
+     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button></div>
+   <p style="color:var(--muted);margin-top:-4px">Aparecen en el inicio de sesión, en Comandas, Stock y Cierre. Para eliminar una barra, primero devolvé su stock al depósito.</p>
+   ${S.barras.length||bed?`<div class="tw"><table class="bartab"><thead><tr><th>Nombre</th><th>En stock (evento activo)</th>${bed?'<th></th>':''}</tr></thead><tbody>
+   ${S.barras.map(b=>{const u=unid(b.id);return bed
+     ?`<tr><td><input type="text" id="bn-${esc(b.id)}" data-bn="${esc(b.id)}" value="${esc(S.barEd[b.id]??b.nombre)}" maxlength="30" aria-label="Nombre de la barra"></td>
+        <td><span class="num">${u}</span> u.</td>
+        <td><span class="evacts"><button class="btn" data-act="barGuardar" data-v="${esc(b.id)}">Guardar</button><button class="btn ghost danger" data-act="borrarBarra" data-v="${esc(b.id)}">Eliminar</button></span></td></tr>`
+     :`<tr><td>${esc(b.nombre)}</td><td>${u?`<span class="pill ok"><span class="num">${u}</span> unidades</span>`:'<span class="pill">Sin stock</span>'}</td></tr>`}).join('')}
+   ${bed?`<tr class="nuevo"><td><input type="text" id="barNuevaNombre" value="${esc(S.barNueva)}" maxlength="30" placeholder="Nombre de la barra nueva"></td><td></td>
+        <td><button class="btn pri" data-act="agregarBarra">Agregar</button></td></tr>`:''}
+   </tbody></table></div>`:`<div class="empty">Todavía no hay barras. Tocá el lápiz para agregar la primera.</div>`}</section>`;
   return h}
 
 /* ---------- acciones ---------- */
@@ -917,7 +931,31 @@ const ACT={
     if(!confirmar('borrarCaj-'+v,'Tocá Eliminar de nuevo para sacar a '+c.nombre))return;
     toast('Cajero eliminado: '+c.nombre);
     w(()=>S.db.doc('cajeros/'+v).delete())},
-  nuevaBarra:async()=>{const id='b'+Date.now().toString(36);await w(()=>S.db.doc('barras/'+id).set({nombre:'Barra '+(S.barras.length+1),orden:S.barras.length+1}),'Barra agregada')}
+  barEditar:()=>{S.barEdit=!S.barEdit;S.barEd={};S.barNueva=''},
+  agregarBarra:()=>{
+    const nombre=S.barNueva.trim().replace(/\s+/g,' ');
+    if(!nombre)return toast('Escribí el nombre de la barra.',true);
+    if(S.barras.some(b=>b.nombre.toLowerCase()===nombre.toLowerCase()))return toast('Ya hay una barra con ese nombre.',true);
+    const id='b'+Date.now().toString(36),orden=Math.max(0,...S.barras.map(b=>+b.orden||0))+1;
+    S.barNueva='';toast('Barra agregada: '+nombre);
+    w(()=>S.db.doc('barras/'+id).set({nombre,orden}))},
+  barGuardar:v=>{const b=S.barras.find(x=>x.id===v);if(!b)return;
+    const nombre=(S.barEd[v]??b.nombre).trim().replace(/\s+/g,' ');
+    if(!nombre)return toast('El nombre no puede quedar vacío.',true);
+    if(nombre===b.nombre)return toast('No hay cambios para guardar.');
+    if(S.barras.some(x=>x.id!==v&&x.nombre.toLowerCase()===nombre.toLowerCase()))return toast('Ya hay una barra con ese nombre.',true);
+    delete S.barEd[v];toast('Barra actualizada: '+nombre);
+    w(()=>S.db.doc('barras/'+v).update({nombre}))},
+  borrarBarra:v=>{const b=S.barras.find(x=>x.id===v);if(!b)return;
+    if(S.barras.length<2)return toast('Tiene que quedar al menos una barra.',true);
+    const u=Object.values(stockAll()[v]||{}).reduce((a,q)=>a+Math.max(0,q),0);
+    if(u)return toast(`${b.nombre} tiene ${u} unidades en stock. Devolvelas al depósito desde Stock antes de eliminarla.`,true);
+    if(!confirmar('borrarBar-'+v,'Tocá Eliminar de nuevo para sacar '+b.nombre))return;
+    /* se guarda solo el nombre para que las ventas y cierres viejos lo sigan mostrando */
+    const borradas={...(S.config.barrasBorradas||{}),[v]:b.nombre};
+    S.config={...S.config,barrasBorradas:borradas};toast('Barra eliminada: '+b.nombre);
+    w(()=>S.db.doc('config/main').set({barrasBorradas:borradas},{merge:true}));
+    w(()=>S.db.doc('barras/'+v).delete())}
 };
 /* ---------- Sesión de cajero ----------
    Para vender, el cajero elige su nombre y su barra y escribe su clave.
@@ -1048,7 +1086,9 @@ document.addEventListener('keydown',e=>{
   if(e.key==='Escape'&&S.evModal){ACT.cerrarEventos();render()}
   if(e.key==='Enter'&&e.target.id==='nuevoEv'){e.preventDefault();ACT.crearEv();render()}
   if(e.key==='Enter'&&e.target.id==='editEvNombre'&&S.editEv){e.preventDefault();ACT.guardarEv(S.editEv);render()}
-  if(e.key==='Enter'&&e.target.id==='nuevoCajClave'&&rolActual()==='encargado'){e.preventDefault();ACT.agregarCajero();render()}});
+  if(e.key==='Enter'&&e.target.id==='nuevoCajClave'&&rolActual()==='encargado'){e.preventDefault();ACT.agregarCajero();render()}
+  if(e.key==='Enter'&&e.target.id==='barNuevaNombre'&&rolActual()==='encargado'){e.preventDefault();ACT.agregarBarra();render()}
+  if(e.key==='Enter'&&e.target.dataset.bn&&rolActual()==='encargado'){e.preventDefault();ACT.barGuardar(e.target.dataset.bn);render()}});
 document.addEventListener('submit',async e=>{
   if(e.target.id==='cajForm'){e.preventDefault();const i=$('#cajClave');if(i)S.cajLogin.clave=i.value;await cajIngresar();render();return}
   if(e.target.id==='authForm'){e.preventDefault();const i=$('#authPin');if(i)S.authPin=i.value;await autorizar();render();return}
@@ -1065,6 +1105,8 @@ document.addEventListener('input',e=>{const el=e.target;
   else if(el.dataset.ck)(S.cajEd[el.dataset.ck]||(S.cajEd[el.dataset.ck]={})).clave=el.value;
   else if(el.dataset.cr)(S.cajEd[el.dataset.cr]||(S.cajEd[el.dataset.cr]={})).rol=el.value;
   else if(el.id==='nuevoCajRol')S.cajNuevo.rol=el.value;
+  else if(el.dataset.bn)S.barEd[el.dataset.bn]=el.value;
+  else if(el.id==='barNuevaNombre')S.barNueva=el.value;
   else if(el.id==='authPin')S.authPin=el.value;
 
   else if(el.id==='proveedor')S.proveedor=el.value;
@@ -1084,8 +1126,7 @@ document.addEventListener('change',e=>{const el=e.target;
   if(el.id==='evSel'){cambiarEvento(el.value);el.blur();render();return}
   if(el.dataset.pf){const f=el.dataset.pf;let v=el.type==='checkbox'?el.checked:el.value;
     if(['precio','costo','minimo'].includes(f))v=Math.max(0,+v||0);if(f==='nombre'&&!String(v).trim())return;
-    w(()=>S.db.doc('productos/'+el.dataset.pid).update({[f]:v}))}
-  if(el.dataset.bid&&el.value.trim())w(()=>S.db.doc('barras/'+el.dataset.bid).update({nombre:el.value.trim()}))});
+    w(()=>S.db.doc('productos/'+el.dataset.pid).update({[f]:v}))}});
 
 /* ---------- exportar a Excel ---------- */
 function cargarXLSX(){return window.XLSX?Promise.resolve():new Promise((ok,no)=>{const s=document.createElement('script');
