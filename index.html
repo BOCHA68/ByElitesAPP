@@ -1,7 +1,6 @@
 <!doctype html>
 <html lang="es">
 <head>
-  <link rel="icon" type="image/png" href="icon-192.png">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>By Elites</title>
@@ -154,6 +153,22 @@ td input.wide{width:160px;text-align:left}
 .modal-head h2{margin:0}
 .evbtn{padding:6px 10px;font-size:13px}
 .evlist{display:grid;gap:8px}
+.prod.combo{background:repeating-linear-gradient(135deg,rgb(255 255 255 / .018) 0 10px,transparent 10px 20px),radial-gradient(120% 90% at 0% 0%,color-mix(in srgb,var(--cat) 16%,transparent),transparent 60%),var(--panel2);border-style:dashed}
+.prod.combo .n{font-size:clamp(17px,1.9vw,21px);overflow-wrap:normal}
+.prod.combo.sel .n{padding-right:0}
+.prod .tag{align-self:flex-start;font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--cat);border:1px solid color-mix(in srgb,var(--cat) 50%,transparent);border-radius:999px;padding:2px 8px;margin-bottom:-2px}
+.tl .cmp{display:block;font-size:12px;color:var(--muted)}
+.prodtab tr.combo-row td{border-bottom:0}
+.comprow td{background:var(--panel2);text-align:left}
+.compbox{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.compbox .label{width:100%}
+.compit{display:inline-flex;align-items:center;gap:6px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:4px 4px 4px 6px}
+.compit input{width:64px!important;text-align:center}
+.compit select{min-width:150px}
+.compit .btn{padding:6px 10px}
+.compbox .mas{color:var(--accent2);font-weight:700}
+.auto{display:inline-flex;flex-direction:column;align-items:flex-end;line-height:1.1}
+.auto small,.muted{color:var(--muted);font-size:11px}
 .btn.trash{display:inline-flex;align-items:center;gap:6px;padding:7px 10px}
 .btn.danger-fill{background:var(--bad);border-color:var(--bad);color:#fff}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
@@ -421,6 +436,19 @@ const pct=n=>isFinite(n)?Math.round(n*100)+'%':'–';
 const slug=s=>String(s).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,40)||('x'+Date.now());
 const prod=id=>S.productos.find(p=>p.id===id)||{id,nombre:(S.config.productosBorrados||{})[id]||id,precio:0,costo:0,categoria:'otro',minimo:0,borrado:true};
 const activos=()=>S.productos.filter(p=>p.activo!==false);
+/* ---------- Productos individuales y combos ----------
+   Individual: tiene stock propio (se mueve con compras, envíos, ventas y bajas).
+   Combo: NO tiene stock; su `composicion` = [{p:idIndividual, q:cantidad}] dice qué consume de cada individual. */
+const esCombo=p=>!!p&&p.tipo==='combo';
+const individuales=()=>activos().filter(p=>!esCombo(p));
+const compDe=p=>(esCombo(p)?(p.composicion||[]):[{p:p.id,q:1}]).filter(c=>c&&c.p&&+c.q>0);
+/* consumo real de una línea de venta: si fue un combo, usa la composición guardada en esa venta */
+const consumoLinea=x=>Array.isArray(x.comp)?x.comp.map(c=>({p:c.p,q:(+c.q||0)*(+x.q||0)})):[{p:x.p,q:+x.q||0}];
+/* lo que consume de cada individual el pedido que se está armando */
+function consumoTicket(){const r={};for(const [id,q] of Object.entries(S.ticket))for(const c of compDe(prod(id)))r[c.p]=(r[c.p]||0)+c.q*q;return r}
+const costoCombo=p=>compDe(p).reduce((t,c)=>t+(+prod(c.p).costo||0)*c.q,0);
+const textoComp=p=>compDe(p).map(c=>`${c.q} ${prod(c.p).nombre}`).join(' + ');
+const combosQueUsan=id=>S.productos.filter(c=>esCombo(c)&&compDe(c).some(x=>x.p===id));
 const barraNom=id=>id==='deposito'?'Depósito':(S.barras.find(b=>b.id===id)||{nombre:(S.config.barrasBorradas||{})[id]||id}).nombre;   /* barras eliminadas: conserva el nombre en el historial */
 
 let tt;function toast(msg,err){const t=$('#toast');t.textContent=msg;t.className='toast'+(err?' err':'');t.hidden=false;clearTimeout(tt);tt=setTimeout(()=>t.hidden=true,2600)}
@@ -433,14 +461,14 @@ function stockAll(){
     if(m.tipo==='compra')add('deposito',x.p,q);
     else if(m.tipo==='carga'){add('deposito',x.p,-q);add(m.barra,x.p,q)}
     else if(m.tipo==='devolucion'){add(m.barra,x.p,-q);add('deposito',x.p,q)}
-    else if(m.tipo==='venta'||m.tipo==='baja')add(m.barra,x.p,-q)}
+    else if(m.tipo==='venta'||m.tipo==='baja')for(const c of consumoLinea(x))add(m.barra,c.p,-c.q)}   /* combo → resta cada individual */
   return st}
 function cierreCalc(b){
   const c=S.cierres[b];const r={};const g=p=>r[p]||(r[p]={recibido:0,vendido:0,bajas:0});
   for(const m of S.movs){if(m.barra!==b)continue;for(const x of m.lineas||[]){const q=+x.q||0;
     if(m.tipo==='carga')g(x.p).recibido+=q;
     else if(m.tipo==='devolucion'&&!m.post_cierre)g(x.p).recibido-=q;
-    else if(m.tipo==='venta')g(x.p).vendido+=q;
+    else if(m.tipo==='venta')for(const c of consumoLinea(x))g(c.p).vendido+=c.q;   /* el cierre cuenta individuales */
     else if(m.tipo==='baja')g(x.p).bajas+=q}}
   if(c)Object.keys(c.conteo||{}).forEach(g);
   const filas=Object.entries(r).map(([p,v])=>{const esperado=v.recibido-v.vendido-v.bajas;const contado=c?(+((c.conteo||{})[p])||0):null;
@@ -518,19 +546,25 @@ function vVender(){
   const ps=activos();
   const sinPrecio=ps.filter(p=>!(+p.precio>0)).length;
   if(sinPrecio)h+=`<div class="banner" style="margin-top:14px">${sinPrecio} producto${sinPrecio>1?'s':''} sin precio${rolActual()==='encargado'?'. Cargalos en Ajustes para poder venderlos.':': el encargado tiene que cargarlos.'}</div>`;
-  if(ps.length&&!ps.some(p=>(st[p.id]||0)>0))h+=`<div class="banner" style="margin-top:14px">${esc(barraNom(S.barra))} todavía no tiene stock en este evento.${rolActual()==='encargado'?' Cargalo en Stock → Enviar a barra.':' Pedile al encargado que envíe la mercadería.'}</div>`;
+  const cons=consumoTicket();
+  if(ps.length&&!individuales().some(p=>(st[p.id]||0)>0))h+=`<div class="banner" style="margin-top:14px">${esc(barraNom(S.barra))} todavía no tiene stock en este evento.${rolActual()==='encargado'?' Cargalo en Stock → Enviar a barra.':' Pedile al encargado que envíe la mercadería.'}</div>`;
   h+=`<div class="pos"><div class="grid">`;
-  for(const p of ps){const s=st[p.id]||0;const q=S.ticket[p.id]||0;const np=!(+p.precio>0);
-    const queda=s-q;                                              /* stock después del pedido en curso */
+  for(const p of ps){const q=S.ticket[p.id]||0;const np=!(+p.precio>0);
+    if(esCombo(p)){                                                /* combo: solo nombre y precio, sin número de stock */
+      h+=`<button class="prod combo ${np?'noprice':''}${q?' sel':''}" style="--cat:${(CATS[p.categoria]||CATS.otro).c}" data-act="add" data-v="${esc(p.id)}" ${S.canWrite&&S.db?'':'disabled'}>
+        ${q?`<span class="q num">${q}</span>`:''}<span class="tag">Combo</span><span class="n">${esc(p.nombre)}</span>
+        <span class="pie"><span class="p num">${np?'Sin precio':money(p.precio)}</span></span></button>`;continue}
+    const s=st[p.id]||0,usa=cons[p.id]||0;
+    const queda=s-usa;                                            /* stock después del pedido en curso (incluye lo que consumen los combos) */
     const cls=(np?'noprice ':'')+(queda<=0?'out':(queda<=(+p.minimo||0)?'low':''));   /* precio y stock se marcan por separado */
     h+=`<button class="prod ${cls}${q?' sel':''}" style="--cat:${(CATS[p.categoria]||CATS.otro).c}" data-act="add" data-v="${esc(p.id)}" ${S.canWrite&&S.db?'':'disabled'}>
       ${q?`<span class="q num">${q}</span>`:''}<span class="n">${esc(p.nombre)}</span>
       <span class="pie"><span class="p num">${np?'Sin precio':money(p.precio)}</span>
-      <span class="stk num" aria-label="Stock disponible">${q?`<s>${s}</s> → `:''}<b>${Math.max(queda,0)}</b><small>${queda<=0?'sin stock':'en stock'}</small></span></span></button>`}
+      <span class="stk num" aria-label="Stock disponible">${usa?`<s>${s}</s> → `:''}<b>${Math.max(queda,0)}</b><small>${queda<=0?'sin stock':'en stock'}</small></span></span></button>`}
   h+=`</div><aside class="ticket" id="ticket" aria-label="Pedido actual"><h3>Pedido</h3>`;
   const lines=Object.entries(S.ticket).filter(([,q])=>q>0);
   if(!lines.length)h+=`<p style="color:var(--muted);margin:6px 0 0">Tocá las bebidas para sumarlas.</p>`;
-  for(const [id,q] of lines){const p=prod(id);h+=`<div class="tl"><span class="nm">${esc(p.nombre)}</span><button data-act="minus" data-v="${esc(id)}" aria-label="Quitar uno">−</button><span class="num" style="width:24px;text-align:center">${q}</span><button data-act="add" data-v="${esc(id)}" aria-label="Sumar uno">+</button><span class="num" style="width:90px;text-align:right">${money(q*(+p.precio||0))}</span></div>`}
+  for(const [id,q] of lines){const p=prod(id);h+=`<div class="tl"><span class="nm">${esc(p.nombre)}${esCombo(p)?`<small class="cmp">${esc(textoComp(p))}</small>`:''}</span><button data-act="minus" data-v="${esc(id)}" aria-label="Quitar uno">−</button><span class="num" style="width:24px;text-align:center">${q}</span><button data-act="add" data-v="${esc(id)}" aria-label="Sumar uno">+</button><span class="num" style="width:90px;text-align:right">${money(q*(+p.precio||0))}</span></div>`}
   const tot=lines.reduce((s,[id,q])=>s+q*(+prod(id).precio||0),0);
   h+=`<div class="total"><span class="label">Total</span><b class="num">${money(tot)}</b></div>
     <div class="label" style="margin-bottom:8px">Cobrar con</div>
@@ -580,7 +614,7 @@ function vComandas(){
 
 function vStock(){
   if(!S.config.evento)return '';
-  const st=stockAll();const locs=['deposito',...S.barras.map(b=>b.id)];const ps=activos();
+  const st=stockAll();const locs=['deposito',...S.barras.map(b=>b.id)];const ps=individuales();   /* los combos no tienen stock propio */
   let h=`<section><h2>Stock en vivo</h2><div class="tw"><table><thead><tr><th>Producto</th>${locs.map(l=>`<th>${esc(barraNom(l))}</th>`).join('')}<th>Total</th></tr></thead><tbody>`;
   for(const p of ps){let t=0;h+=`<tr><td><span class="dot" style="--cat:${(CATS[p.categoria]||CATS.otro).c}"></span>${esc(p.nombre)}</td>`;
     for(const l of locs){const v=(st[l]||{})[p.id]||0;t+=v;const cls=l!=='deposito'&&v<=0?'out':(l!=='deposito'&&v<=(+p.minimo||0)?'low':'');h+=`<td class="${cls}">${v}</td>`}
@@ -611,7 +645,7 @@ function vCierre(){
   if(!b)return h+`<div class="empty" style="margin-top:14px">Elegí la barra que querés cerrar.</div>`;
   const c=S.cierres[b];const k=cierreCalc(b);
   if(!c||S.rehacer){
-    const ids=new Set(k.filas.map(f=>f.p));const ps=activos().filter(p=>ids.has(p.id));
+    const ids=new Set(k.filas.map(f=>f.p));const ps=individuales().filter(p=>ids.has(p.id));
     h+=`<section style="margin-top:16px"><h2>Conteo de ${esc(barraNom(b))}</h2>
       <div class="banner" style="border-left-color:var(--accent)">Contá lo que quedó sin mirar el sistema. Las diferencias aparecen recién cuando guardás.</div>`;
     if(!ps.length)h+=`<div class="empty">Esta barra no recibió mercadería en este evento.</div>`;
@@ -648,7 +682,7 @@ function vPanel(){
     for(const x of m.lineas||[]){const c=(+x.q||0)*(+x.costo||0);cmv+=c;const p=porP[x.p]||(porP[x.p]={u:0,f:0,c:0});p.u+=+x.q||0;p.f+=(+x.q||0)*(+x.precio||0);p.c+=c}}
   let bajas=0;S.movs.filter(m=>m.tipo==='baja').forEach(m=>(m.lineas||[]).forEach(x=>bajas+=(+x.q||0)*(+prod(x.p).costo||0)));
   let falt=0;Object.keys(S.cierres).forEach(b=>cierreCalc(b).filas.forEach(f=>{if(f.dif<0)falt+=(-f.dif)*(+prod(f.p).costo||0)}));
-  const gan=fact-cmv-bajas-falt;const sinCosto=activos().some(p=>!(+p.costo>0));
+  const gan=fact-cmv-bajas-falt;const sinCosto=individuales().some(p=>!(+p.costo>0));
   let h=pre+`<div class="kpis"><div class="kpi"><small>Facturación</small><b class="num">${money(fact)}</b></div>
    <div class="kpi"><small>Ganancia bruta</small><b class="num">${money(gan)}</b><small>Margen ${pct(gan/fact)}</small></div>
    <div class="kpi"><small>Ventas</small><b class="num">${ventas.length}</b><small>Ticket promedio ${money(fact/ventas.length)}</small></div>
@@ -660,7 +694,7 @@ function vPanel(){
   const rk=Object.entries(porP).sort((a,b)=>(b[1].f-b[1].c)-(a[1].f-a[1].c));
   h+=`<section><h2>Productos</h2><div class="tw"><table><thead><tr><th>Producto</th><th>Unidades</th><th>Facturación</th><th>Ganancia</th><th>Margen</th></tr></thead><tbody>${rk.map(([id,x])=>`<tr><td><span class="dot" style="--cat:${(CATS[prod(id).categoria]||CATS.otro).c}"></span>${esc(prod(id).nombre)}</td><td>${x.u}</td><td>${money(x.f)}</td><td>${money(x.f-x.c)}</td><td>${pct((x.f-x.c)/x.f)}</td></tr>`).join('')}</tbody></table></div></section>`;
   const st=stockAll();const crit=[];
-  for(const b of S.barras)for(const p of activos()){const v=(st[b.id]||{})[p.id];if(v!==undefined&&v<=(+p.minimo||0))crit.push([b,p,v])}
+  for(const b of S.barras)for(const p of individuales()){const v=(st[b.id]||{})[p.id];if(v!==undefined&&v<=(+p.minimo||0))crit.push([b,p,v])}
   h+=`<div class="cols" style="margin-top:28px"><div class="card"><h3>Stock crítico</h3>${crit.length?`<div class="tw"><table><tbody>${crit.map(([b,p,v])=>`<tr><td>${esc(p.nombre)} · ${esc(b.nombre)}</td><td class="${v<=0?'out':'low'}">${v<=0?'Sin stock':'Quedan '+v}</td></tr>`).join('')}</tbody></table></div>`:'<p style="color:var(--muted);margin:0">Nada por debajo del mínimo.</p>'}</div>
    <div class="card"><h3>Por cajero</h3><div class="tw"><table><thead><tr><th>Nombre</th><th>Ventas</th><th>Facturación</th></tr></thead><tbody>${Object.entries(porQ).sort((a,b)=>b[1].f-a[1].f).map(([n,x])=>`<tr><td>${esc(n)}</td><td>${x.n}</td><td>${money(x.f)}</td></tr>`).join('')}</tbody></table></div></div></div>`;
   h+=vSesiones()+vEliminaciones();
@@ -711,17 +745,28 @@ function vAjustes(){
   h+=`<section><h2>Eventos</h2>
    <div class="row"><span>Activo: <b style="color:var(--accent)">${evAct?esc(evAct.nombre):'ninguno'}</b> · ${S.eventos.length} evento${S.eventos.length===1?'':'s'}</span>
    <button class="btn pri" data-act="abrirEventos" ${dis}>Gestionar eventos</button></div></section>`;
-  h+=`<section><h2>Productos y precios</h2><p style="color:var(--muted);margin-top:-4px">Los cambios se guardan solos y llegan a todas las barras al instante. El costo sirve para calcular la ganancia; el bartender no lo ve.</p>
-   <div class="tw"><table><thead><tr><th>Producto</th><th>Tipo</th><th>Precio venta ($)</th><th>Costo ($)</th><th>Mínimo</th><th>Activo</th><th><span class="sr">Borrar</span></th></tr></thead><tbody>
-   ${S.productos.map(p=>`<tr><td><input class="wide" type="text" id="pn-${esc(p.id)}" data-pf="nombre" data-pid="${esc(p.id)}" value="${esc(p.nombre)}" ${dis}></td>
+  /* Productos: individuales (con stock) y combos (con composición, sin stock) */
+  const trash=`<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg>`;
+  const indiv=S.productos.filter(x=>!esCombo(x));
+  h+=`<section><h2>Productos y precios</h2><p style="color:var(--muted);margin-top:-4px">Los cambios se guardan solos y llegan a todas las barras al instante. El costo sirve para calcular la ganancia; el bartender no lo ve. Un <b>combo</b> no tiene stock propio: al venderlo se descuentan los productos que lo componen.</p>
+   <div class="tw"><table class="prodtab"><thead><tr><th>Producto</th><th>Clase</th><th>Categoría</th><th>Precio venta ($)</th><th>Costo ($)</th><th>Mínimo</th><th>Activo</th><th><span class="sr">Borrar</span></th></tr></thead><tbody>
+   ${S.productos.map(p=>{const cb=esCombo(p);return `<tr${cb?' class="combo-row"':''}><td><input class="wide" type="text" id="pn-${esc(p.id)}" data-pf="nombre" data-pid="${esc(p.id)}" value="${esc(p.nombre)}" ${dis}></td>
+     <td><select class="f" id="pt-${esc(p.id)}" data-pf="tipo" data-pid="${esc(p.id)}" ${dis} aria-label="Clase de producto"><option value="individual"${cb?'':' selected'}>Individual</option><option value="combo"${cb?' selected':''}>Combo</option></select></td>
      <td><select class="f" id="pc-${esc(p.id)}" data-pf="categoria" data-pid="${esc(p.id)}" ${dis}>${Object.entries(CATS).map(([k,c])=>`<option value="${k}"${k===p.categoria?' selected':''}>${c.n}</option>`).join('')}</select></td>
      <td><input type="number" min="0" step="100" id="pp-${esc(p.id)}" data-pf="precio" data-pid="${esc(p.id)}" value="${+p.precio||''}" placeholder="0" ${dis}></td>
-     <td><input type="number" min="0" step="100" id="pk-${esc(p.id)}" data-pf="costo" data-pid="${esc(p.id)}" value="${+p.costo||''}" placeholder="0" ${dis}></td>
-     <td><input type="number" min="0" step="1" id="pm-${esc(p.id)}" data-pf="minimo" data-pid="${esc(p.id)}" value="${+p.minimo||0}" style="width:70px" ${dis}></td>
+     <td>${cb?`<span class="auto num" title="Suma del costo de sus componentes">${money(costoCombo(p))}<small>auto</small></span>`
+          :`<input type="number" min="0" step="100" id="pk-${esc(p.id)}" data-pf="costo" data-pid="${esc(p.id)}" value="${+p.costo||''}" placeholder="0" ${dis}>`}</td>
+     <td>${cb?'<span class="muted">—</span>':`<input type="number" min="0" step="1" id="pm-${esc(p.id)}" data-pf="minimo" data-pid="${esc(p.id)}" value="${+p.minimo||0}" style="width:70px" ${dis}>`}</td>
      <td style="text-align:center"><input type="checkbox" id="pa-${esc(p.id)}" data-pf="activo" data-pid="${esc(p.id)}" ${p.activo!==false?'checked':''} ${dis} aria-label="Activo"></td>
-     <td><button class="btn ghost danger trash" data-act="borrarProd" data-v="${esc(p.id)}" ${dis} aria-label="Borrar ${esc(p.nombre)}" title="Borrar producto">
-       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg>Borrar</button></td></tr>`).join('')}
-   </tbody></table></div><div class="row" style="margin-top:10px"><button class="btn" data-act="nuevoProd" ${dis}>Agregar producto</button></div></section>`;
+     <td><button class="btn ghost danger trash" data-act="borrarProd" data-v="${esc(p.id)}" ${dis} aria-label="Borrar ${esc(p.nombre)}" title="Borrar producto">${trash}Borrar</button></td></tr>
+     ${cb?`<tr class="comprow"><td colspan="8"><div class="compbox"><span class="label">Composición de ${esc(p.nombre)}</span>
+       ${(p.composicion||[]).map((c,i)=>`<span class="compit">
+         <input type="number" min="1" step="1" inputmode="numeric" id="cmq-${esc(p.id)}-${i}" data-cmq="${esc(p.id)}|${i}" value="${+c.q||1}" aria-label="Cantidad" ${dis}>
+         <select class="f" id="cp-${esc(p.id)}-${i}" data-cp="${esc(p.id)}|${i}" aria-label="Producto" ${dis}>${indiv.map(x=>`<option value="${esc(x.id)}"${x.id===c.p?' selected':''}>${esc(x.nombre)}</option>`).join('')}${c.p&&!indiv.some(x=>x.id===c.p)?`<option value="${esc(c.p)}" selected>${esc(prod(c.p).nombre)} (no disponible)</option>`:''}</select>
+         <button class="btn ghost danger" data-act="compDel" data-v="${esc(p.id)}|${i}" aria-label="Quitar componente" ${dis}>✕</button></span>`).join('<span class="mas">+</span>')}
+       <button class="btn" data-act="compAdd" data-v="${esc(p.id)}" ${dis||(indiv.length?'':'disabled')}>+ Agregar producto</button>
+       ${compDe(p).length?'':'<span class="pill warn">Sin composición: no se puede vender</span>'}</div></td></tr>`:''}`}).join('')}
+   </tbody></table></div><div class="row" style="margin-top:10px"><button class="btn" data-act="nuevoProd" ${dis}>Agregar producto</button><button class="btn" data-act="nuevoCombo" ${dis}>Agregar combo</button></div></section>`;
   h+=`<section><h2>Acceso</h2>
    <p style="color:var(--muted);margin-top:-4px">Hay dos perfiles. <b>Cajero</b>: la app abre así por defecto, fija en Vender. <b>Encargado</b>: con este PIN, acceso total.</p>
    <div class="card"><h3>PIN de encargado ${S.config.pinHash?'<span class="pill ok">Activo</span>':'<span class="pill warn">Sin PIN: todos entran como Encargado</span>'}</h3>
@@ -775,15 +820,21 @@ function lineasDe(map){return Object.entries(map).map(([p,q])=>({p,q:Math.floor(
 const ACT={
   setBarra:v=>{S.barra=v;ls('barra',v);S.ticket={}},
   add:v=>{const p=prod(v);if(!(+p.precio>0)){toast(p.nombre+' no tiene precio.',true);return}
-    const s=(stockAll()[S.barra]||{})[v]||0;S.ticket[v]=(S.ticket[v]||0)+1;
-    if(S.ticket[v]>s)toast(`Ojo: ${p.nombre} figura con ${Math.max(s,0)} en stock en esta barra.`,true)},   /* avisa pero no frena la venta */
+    if(esCombo(p)&&!compDe(p).length){toast(`El combo ${p.nombre} no tiene composición. El encargado la carga en Ajustes.`,true);return}
+    S.ticket[v]=(S.ticket[v]||0)+1;
+    const st=stockAll()[S.barra]||{},cons=consumoTicket();
+    const falta=compDe(p).find(c=>cons[c.p]>(st[c.p]||0));           /* avisa pero no frena la venta */
+    if(falta)toast(`Ojo: ${prod(falta.p).nombre} figura con ${Math.max(st[falta.p]||0,0)} en stock en esta barra.`,true)},
   minus:v=>{if(!S.ticket[v])return;
     pedirAutorizacion(`Quitar 1 ${prod(v).nombre} del pedido`,S.barra,()=>{S.ticket[v]=Math.max(0,(S.ticket[v]||0)-1);if(!S.ticket[v])delete S.ticket[v]})},
   limpiar:()=>{const n=Object.values(S.ticket).reduce((a,b)=>a+b,0);if(!n)return;
     pedirAutorizacion(`Vaciar el pedido (${n} ${n===1?'ítem':'ítems'})`,S.barra,()=>{S.ticket={}})},
   cobrar:async v=>{
     if(!S.db||!evId()){toast('Elegí un evento en Ajustes.',true);return}
-    const lineas=Object.entries(S.ticket).filter(([,q])=>q>0).map(([p,q])=>{const x=prod(p);return {p,q,precio:+x.precio||0,costo:+x.costo||0}});
+    const lineas=Object.entries(S.ticket).filter(([,q])=>q>0).map(([p,q])=>{const x=prod(p);
+      if(!esCombo(x))return {p,q,precio:+x.precio||0,costo:+x.costo||0};
+      /* combo: se guarda la composición en la venta → el stock unificado descuenta cada individual (ej: 1 Absolut + 3 Speed) */
+      return {p,q,precio:+x.precio||0,costo:costoCombo(x),comp:compDe(x).map(c=>({p:c.p,q:+c.q}))}});
     if(!lineas.length)return;
     const cs=cajSesionValida();const caj=cs&&S.cajeros.find(c=>c.id===cs.id);
     if(!caj)return toast('Iniciá sesión de cajero para cobrar.',true);
@@ -855,6 +906,7 @@ const ACT={
     pedirAutorizacion(det,m.barra||'deposito',()=>w(()=>S.db.doc('movs/'+v).delete(),'Movimiento anulado'))},
   authCancel:()=>{S.auth=null;S.authPin='';toast('Eliminación cancelada')},
   borrarProd:v=>{const p=S.productos.find(x=>x.id===v);if(!p)return;
+    const usan=combosQueUsan(v);if(usan.length)return toast(`${p.nombre} es parte de ${usan.map(c=>c.nombre).join(', ')}. Sacalo de ese combo antes de borrarlo.`,true);
     const enBarras=Object.entries(stockAll()).reduce((t,[,st])=>t+Math.max(0,st[v]||0),0);
     const vendidas=S.movs.filter(m=>m.tipo==='venta').reduce((t,m)=>t+(m.lineas||[]).filter(x=>x.p===v).reduce((a,x)=>a+x.q,0),0);
     S.borrarProd={id:v,nombre:p.nombre,enBarras,vendidas}},
@@ -903,6 +955,15 @@ const ACT={
     const refs=[...info.refs,S.db.doc('eventos/'+v)];
     for(let i=0;i<refs.length;i+=400){const b=S.db.batch();refs.slice(i,i+400).forEach(r=>b.delete(r));w(()=>b.commit())}
     toast('Evento eliminado: '+e.nombre)},
+  nuevoCombo:()=>{const id='k'+Date.now().toString(36);
+    const ind=S.productos.filter(x=>!esCombo(x)&&x.activo!==false);
+    toast('Combo agregado al final de la lista: elegí qué lo compone');
+    w(()=>S.db.doc('productos/'+id).set({nombre:'Combo nuevo',tipo:'combo',composicion:ind.length?[{p:ind[0].id,q:1}]:[],categoria:'otro',precio:0,activo:true,orden:S.productos.length+1}))},
+  compAdd:v=>{const p=S.productos.find(x=>x.id===v);if(!p)return;const comp=[...(p.composicion||[])];
+    const ind=S.productos.filter(x=>!esCombo(x));const libre=ind.find(x=>!comp.some(c=>c.p===x.id))||ind[0];if(!libre)return;
+    comp.push({p:libre.id,q:1});guardarComp(v,comp)},
+  compDel:v=>{const [id,i]=v.split('|');const p=S.productos.find(x=>x.id===id);if(!p)return;
+    const comp=(p.composicion||[]).filter((_,k)=>k!==+i);guardarComp(id,comp)},
   nuevoProd:async()=>{const id='p'+Date.now().toString(36);await w(()=>S.db.doc('productos/'+id).set({nombre:'Producto nuevo',categoria:'otro',precio:0,costo:0,minimo:0,activo:true,orden:S.productos.length+1}),'Producto agregado al final de la lista')},
   cajEditar:()=>{S.cajEdit=!S.cajEdit;S.cajEd={};S.cajNuevo={nombre:'',clave:'',rol:'cajero'}},
   agregarCajero:async()=>{
@@ -1070,6 +1131,13 @@ function vAuth(){
    <p class="aviso">${urlsAlerta('x').length?'Se avisó automáticamente al encargado. Esperá a que se acerque a ingresar el PIN.':'Llamá al encargado: tiene que ingresar su PIN para eliminar.'}</p>
   </div>`}
 
+/* Guarda la composición de un combo (al instante en pantalla y en Firebase). Une renglones repetidos. */
+function guardarComp(id,comp){
+  const m=new Map();for(const c of comp)if(c.p)m.set(c.p,(m.get(c.p)||0)+Math.max(1,Math.floor(+c.q||1)));
+  const limpio=[...m].map(([p,q])=>({p,q}));
+  S.productos=S.productos.map(x=>x.id===id?{...x,composicion:limpio}:x);sched();
+  w(()=>S.db.doc('productos/'+id).update({composicion:limpio}))}
+
 let pend={};function confirmar(k,msg){if(pend[k]&&Date.now()-pend[k]<4000){delete pend[k];return true}pend[k]=Date.now();toast(msg);return false}
 
 /* Permisos: ¿este rol puede ejecutar esta acción? */
@@ -1125,6 +1193,19 @@ document.addEventListener('change',e=>{const el=e.target;
   if(el.id==='movBarraSel'){ACT.movBarra(el.value);el.blur();render();return}
   if(el.id==='cierreBarraSel'){ACT.cierreBarra(el.value);el.blur();render();return}
   if(el.id==='evSel'){cambiarEvento(el.value);el.blur();render();return}
+  if(el.dataset.cp||el.dataset.cmq){const [id,i]=(el.dataset.cp||el.dataset.cmq).split('|');const p=S.productos.find(x=>x.id===id);if(!p)return;
+    const comp=(p.composicion||[]).map(c=>({...c}));if(!comp[+i])return;
+    if(el.dataset.cp)comp[+i].p=el.value;else comp[+i].q=Math.max(1,Math.floor(+el.value||1));
+    guardarComp(id,comp);return}
+  if(el.dataset.pf==='tipo'){const id=el.dataset.pid,p=S.productos.find(x=>x.id===id);if(!p)return;
+    if(el.value==='combo'){const usan=combosQueUsan(id);
+      if(usan.length){el.value='individual';return toast(`${p.nombre} es parte de ${usan.map(c=>c.nombre).join(', ')}: no puede ser combo.`,true)}
+      const ind=S.productos.filter(x=>!esCombo(x)&&x.id!==id);
+      const comp=p.composicion&&p.composicion.length?p.composicion:(ind.length?[{p:ind[0].id,q:1}]:[]);
+      S.productos=S.productos.map(x=>x.id===id?{...x,tipo:'combo',composicion:comp}:x);
+      w(()=>S.db.doc('productos/'+id).update({tipo:'combo',composicion:comp}));toast(p.nombre+' ahora es combo: elegí qué lo compone')}
+    else{S.productos=S.productos.map(x=>x.id===id?{...x,tipo:'individual'}:x);w(()=>S.db.doc('productos/'+id).update({tipo:'individual'}))}
+    el.blur();render();return}
   if(el.dataset.pf){const f=el.dataset.pf;let v=el.type==='checkbox'?el.checked:el.value;
     if(['precio','costo','minimo'].includes(f))v=Math.max(0,+v||0);if(f==='nombre'&&!String(v).trim())return;
     w(()=>S.db.doc('productos/'+el.dataset.pid).update({[f]:v}))}});
@@ -1140,7 +1221,7 @@ async function exportar(){
     const fh=t=>t?new Date(t).toLocaleString('es-AR'):'';
     const ventas=[];const otros=[];const resumen={};
     for(const m of [...S.movs].sort((a,b)=>(a.at||0)-(b.at||0))){
-      if(m.tipo==='venta')for(const x of m.lineas||[]){ventas.push({'Fecha y hora':fh(m.at),'Lado':barraNom(m.barra),'Pedido':m.numero||'','Cajero':m.quien||'','Producto':prod(x.p).nombre,'Cantidad':x.q,'Precio':x.precio,'Subtotal':x.q*x.precio,'Costo':x.q*x.costo,'Medio de pago':nombrePago(m.pago),'Efectivo':m.pago==='efectivo'?x.q*x.precio:0,'Mercado Pago':m.pago==='mercadopago'?x.q*x.precio:0,'Tarjeta':m.pago==='tarjeta'?x.q*x.precio:0,'Entregado':m.entregado===false?'No':'Sí','Entregado por':m.entregadoPor||''});
+      if(m.tipo==='venta')for(const x of m.lineas||[]){ventas.push({'Fecha y hora':fh(m.at),'Lado':barraNom(m.barra),'Pedido':m.numero||'','Cajero':m.quien||'','Producto':prod(x.p).nombre,'Combo (contiene)':Array.isArray(x.comp)?x.comp.map(c=>c.q+' '+prod(c.p).nombre).join(' + '):'','Cantidad':x.q,'Precio':x.precio,'Subtotal':x.q*x.precio,'Costo':x.q*x.costo,'Medio de pago':nombrePago(m.pago),'Efectivo':m.pago==='efectivo'?x.q*x.precio:0,'Mercado Pago':m.pago==='mercadopago'?x.q*x.precio:0,'Tarjeta':m.pago==='tarjeta'?x.q*x.precio:0,'Entregado':m.entregado===false?'No':'Sí','Entregado por':m.entregadoPor||''});
         const r=resumen[x.p]||(resumen[x.p]={'Producto':prod(x.p).nombre,'Unidades':0,'Facturación':0,'Costo':0});r.Unidades+=x.q;r['Facturación']+=x.q*x.precio;r.Costo+=x.q*x.costo}
       else if(m.tipo==='anulacion')otros.push({'Fecha y hora':fh(m.at),'Tipo':TIPOS.anulacion,'Motivo':m.detalle||'','Lado / proveedor':m.barra||'','Producto':'','Cantidad':'','Quién':m.quien||''});
       else for(const x of m.lineas||[])otros.push({'Fecha y hora':fh(m.at),'Tipo':TIPOS[m.tipo]||m.tipo,'Motivo':m.motivo||'','Lado / proveedor':m.tipo==='compra'?(m.proveedor||''):barraNom(m.barra),'Producto':prod(x.p).nombre,'Cantidad':x.q,'Quién':m.quien||''})}
