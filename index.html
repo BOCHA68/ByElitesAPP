@@ -57,7 +57,7 @@ main{padding-top:16px;max-width:1200px;margin-inline:auto}
 .seg{display:flex;flex-wrap:wrap;gap:6px}
 .seg button{background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:8px 14px;font-weight:600}
 .seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
-input[type=text],input[type=number],input[type=password],input[type=tel],select.f{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:9px 10px;min-width:0}
+input[type=text],input[type=number],input[type=password],input[type=tel],input[type=time],select.f{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:9px 10px;min-width:0}
 input[type=number]{width:100%}
 .btn{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:10px 16px;font-weight:600}
 .btn.pri{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
@@ -207,7 +207,7 @@ nav button[aria-current="page"]{color:#fff;border-color:var(--accent);text-shado
 .card,.kpi,.ticket,.login,.modal,.evrow,.cajbar,.tw{background:linear-gradient(180deg,rgb(255 255 255 / .025),transparent),var(--panel);border-color:rgb(255 255 255 / .07)}
 .kpi b{background:linear-gradient(90deg,#fff,var(--accent2));-webkit-background-clip:text;background-clip:text;color:transparent}
 .bar .tr i{background:linear-gradient(90deg,var(--accent),var(--accent2));box-shadow:0 0 10px var(--accent)}
-input[type=text],input[type=number],input[type=password],input[type=tel],select.f{background:#0d0d16;border-color:var(--line);border-radius:10px}
+input[type=text],input[type=number],input[type=password],input[type=tel],input[type=time],select.f{background:#0d0d16;border-color:var(--line);border-radius:10px}
 input:focus,select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgb(180 108 255 / .22)}
 .cajbar{border-radius:14px}
 .cajbar b{color:var(--accent2)}
@@ -265,6 +265,44 @@ input:focus,select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 
 .ped .entregar{padding:20px;border:0;border-radius:16px;font-family:var(--f-display);font-size:26px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:#03140c;
   background:linear-gradient(135deg,#2ff0a0,#19c98a);box-shadow:0 0 24px -4px var(--good);touch-action:manipulation}
 .ped .entregar:active{transform:scale(.97)}
+
+/* ================= Vender: tarjetas rectangulares, combos arriba y más grandes ================= */
+.vgrids{display:grid;gap:10px;align-content:start;min-width:0}
+.glabel{margin:2px 0 -2px}
+.grid.combos{grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px}
+.grid.indiv{grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px}
+.prod{aspect-ratio:auto}
+.grid.indiv .prod{aspect-ratio:16/10;padding:12px 12px 10px;border-radius:16px}
+.grid.indiv .prod .n{font-size:clamp(16px,1.55vw,19px)}
+.grid.indiv .prod .p{font-size:15px}
+.grid.indiv .prod .stk b{font-size:22px}
+.grid.indiv .prod .q{min-width:30px;height:30px;font-size:16px;top:8px;right:8px}
+.grid.indiv .prod.sel .n{padding-right:34px}
+.grid.combos .prod{aspect-ratio:2/1;padding:16px 18px 14px;border-radius:20px}
+.grid.combos .prod .n{font-size:clamp(21px,2.1vw,27px)}
+.grid.combos .prod .p{font-size:20px}
+.grid.combos .prod .q{min-width:38px;height:38px;font-size:20px}
+.prod .pie{align-items:flex-end}
+.prod .cmpt{font-size:12px;color:var(--muted);text-align:right;max-width:55%;line-height:1.2}
+@media (max-width:520px){
+  .grid.combos{grid-template-columns:minmax(0,1fr)}
+  .grid.combos .prod{aspect-ratio:2.3/1}
+  .grid.indiv{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .grid.indiv .prod{aspect-ratio:4/3}
+}
+/* Happy Hour */
+.hhbar{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;margin-top:14px;padding:12px 16px;border-radius:14px;
+  background:linear-gradient(90deg,rgb(255 79 126 / .18),rgb(180 108 255 / .18));border:1px solid rgb(255 79 126 / .45);box-shadow:0 0 24px -8px #ff4f7e}
+.hhbar b{font-family:var(--f-display);font-size:22px;letter-spacing:.04em;text-transform:uppercase;color:#ff8ab0;text-shadow:0 0 12px rgb(255 79 126 / .6)}
+.hhbar span{color:var(--fg);font-size:14px}
+.p.hhp{display:flex;flex-direction:column;line-height:1.05;color:#ff8ab0}
+.p.hhp s{font-size:12px;color:var(--muted);font-weight:500}
+.hhsave{white-space:nowrap;font-size:12px;letter-spacing:0;text-transform:none;color:#ff8ab0}
+.hhcfg{display:grid;gap:14px}
+.hhgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px}
+.hhgrid input,.hhgrid select{width:100%}
+.chk{display:flex;align-items:center;gap:10px;font-weight:600}
+.chk input{width:20px;height:20px;accent-color:var(--accent)}
 @media (prefers-reduced-motion:reduce){.ped.nuevo{animation:none}.prod,.btn,.pays button{transition:none}}
 </style>
 </head>
@@ -427,6 +465,9 @@ async function vaciarCola(){if(subiendo||!S.db||!S.cola.length)return;subiendo=t
   finally{subiendo=false;await colaRefrescar()}}
 setInterval(vaciarCola,8000);addEventListener('online',vaciarCola);
 setInterval(()=>{if(S.tab==='comandas'||S.tab==='vender')sched()},20000);
+/* Happy Hour: revisa la hora cada 5 s y actualiza precios al instante cuando empieza o termina */
+let hhEstado=null;
+setInterval(()=>{const a=!!hhActiva();if(hhEstado!==null&&a!==hhEstado){toast(a?'¡Empezó el Happy Hour! Los precios ya tienen descuento.':'Terminó el Happy Hour: volvieron los precios de lista.');render()}hhEstado=a},5000);
 async function sha(s){const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode('barras:'+s));return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('')}
 
 const $=s=>document.querySelector(s);
@@ -449,6 +490,26 @@ function consumoTicket(){const r={};for(const [id,q] of Object.entries(S.ticket)
 const costoCombo=p=>compDe(p).reduce((t,c)=>t+(+prod(c.p).costo||0)*c.q,0);
 const textoComp=p=>compDe(p).map(c=>`${c.q} ${prod(c.p).nombre}`).join(' + ');
 const combosQueUsan=id=>S.productos.filter(c=>esCombo(c)&&compDe(c).some(x=>x.p===id));
+
+/* ---------- Happy Hour ----------
+   config.happy = {activo, tipo:'porcentaje'|'monto', valor, desde:'HH:MM', hasta:'HH:MM', aplica:'todo'|'combos'}
+   Usa la hora del celular. Si "desde" es mayor que "hasta" (23:00 → 02:00), cruza la medianoche. */
+const aMin=t=>{const [h,m]=String(t||'').split(':').map(Number);return (h||0)*60+(m||0)};
+function hhActiva(ahora=new Date()){
+  const h=S.config.happy;if(!h||!h.activo||!(+h.valor>0)||!h.desde||!h.hasta)return null;
+  const n=ahora.getHours()*60+ahora.getMinutes(),d=aMin(h.desde),f=aMin(h.hasta);
+  if(d===f)return null;
+  return (d<f?(n>=d&&n<f):(n>=d||n<f))?h:null}
+/* minutos que faltan para que termine (para el cartel) */
+function hhRestan(ahora=new Date()){const h=hhActiva(ahora);if(!h)return 0;const n=ahora.getHours()*60+ahora.getMinutes();return (aMin(h.hasta)-n+1440)%1440}
+/* precio que se cobra ahora mismo: con descuento si corre el Happy Hour */
+function precioVenta(p,ahora=new Date()){
+  const lista=+p.precio||0,h=hhActiva(ahora);
+  if(!h||!lista||(h.aplica==='combos'&&!esCombo(p)))return {precio:lista,lista,hh:false};
+  const desc=h.tipo==='monto'?+h.valor:Math.round(lista*(+h.valor)/100);
+  const precio=Math.max(0,lista-desc);
+  return {precio,lista,hh:precio<lista}}
+const textoHH=h=>h.tipo==='monto'?`−${money(h.valor)}`:`−${+h.valor}%`;
 const barraNom=id=>id==='deposito'?'Depósito':(S.barras.find(b=>b.id===id)||{nombre:(S.config.barrasBorradas||{})[id]||id}).nombre;   /* barras eliminadas: conserva el nombre en el historial */
 
 let tt;function toast(msg,err){const t=$('#toast');t.textContent=msg;t.className='toast'+(err?' err':'');t.hidden=false;clearTimeout(tt);tt=setTimeout(()=>t.hidden=true,2600)}
@@ -548,25 +609,37 @@ function vVender(){
   if(sinPrecio)h+=`<div class="banner" style="margin-top:14px">${sinPrecio} producto${sinPrecio>1?'s':''} sin precio${rolActual()==='encargado'?'. Cargalos en Ajustes para poder venderlos.':': el encargado tiene que cargarlos.'}</div>`;
   const cons=consumoTicket();
   if(ps.length&&!individuales().some(p=>(st[p.id]||0)>0))h+=`<div class="banner" style="margin-top:14px">${esc(barraNom(S.barra))} todavía no tiene stock en este evento.${rolActual()==='encargado'?' Cargalo en Stock → Enviar a barra.':' Pedile al encargado que envíe la mercadería.'}</div>`;
-  h+=`<div class="pos"><div class="grid">`;
-  for(const p of ps){const q=S.ticket[p.id]||0;const np=!(+p.precio>0);
-    if(esCombo(p)){                                                /* combo: solo nombre y precio, sin número de stock */
+  /* Happy Hour: cartel con cuenta regresiva mientras corre */
+  const hh=hhActiva();
+  if(hh)h+=`<div class="hhbar" role="status"><b>Happy Hour ${esc(textoHH(hh))}</b><span>${hh.aplica==='combos'?'en combos':'en combos y bebidas'} · hasta las ${esc(hh.hasta)} · quedan ${hhRestan()} min</span></div>`;
+  /* precio de la tarjeta: tachado el de lista y resaltado el de Happy Hour */
+  const precioHTML=(p,np)=>{if(np)return `<span class="p num">Sin precio</span>`;const v=precioVenta(p);
+    return v.hh?`<span class="p num hhp"><s>${money(v.lista)}</s>${money(v.precio)}</span>`:`<span class="p num">${money(v.precio)}</span>`};
+  const combos=ps.filter(esCombo),indivs=ps.filter(p=>!esCombo(p));      /* combos siempre arriba */
+  h+=`<div class="pos"><div class="vgrids">`;
+  if(combos.length){h+=`<div class="label glabel">Combos</div><div class="grid combos">`;
+    for(const p of combos){const q=S.ticket[p.id]||0,np=!(+p.precio>0);    /* combo: nombre y precio, sin número de stock */
       h+=`<button class="prod combo ${np?'noprice':''}${q?' sel':''}" style="--cat:${(CATS[p.categoria]||CATS.otro).c}" data-act="add" data-v="${esc(p.id)}" ${S.canWrite&&S.db?'':'disabled'}>
         ${q?`<span class="q num">${q}</span>`:''}<span class="tag">Combo</span><span class="n">${esc(p.nombre)}</span>
-        <span class="pie"><span class="p num">${np?'Sin precio':money(p.precio)}</span></span></button>`;continue}
-    const s=st[p.id]||0,usa=cons[p.id]||0;
-    const queda=s-usa;                                            /* stock después del pedido en curso (incluye lo que consumen los combos) */
-    const cls=(np?'noprice ':'')+(queda<=0?'out':(queda<=(+p.minimo||0)?'low':''));   /* precio y stock se marcan por separado */
-    h+=`<button class="prod ${cls}${q?' sel':''}" style="--cat:${(CATS[p.categoria]||CATS.otro).c}" data-act="add" data-v="${esc(p.id)}" ${S.canWrite&&S.db?'':'disabled'}>
-      ${q?`<span class="q num">${q}</span>`:''}<span class="n">${esc(p.nombre)}</span>
-      <span class="pie"><span class="p num">${np?'Sin precio':money(p.precio)}</span>
-      <span class="stk num" aria-label="Stock disponible">${usa?`<s>${s}</s> → `:''}<b>${Math.max(queda,0)}</b><small>${queda<=0?'sin stock':'en stock'}</small></span></span></button>`}
+        <span class="pie">${precioHTML(p,np)}<small class="cmpt">${esc(textoComp(p))}</small></span></button>`}
+    h+=`</div>`}
+  if(indivs.length){if(combos.length)h+=`<div class="label glabel">Bebidas</div>`;h+=`<div class="grid indiv">`;
+    for(const p of indivs){const q=S.ticket[p.id]||0,np=!(+p.precio>0);
+      const s=st[p.id]||0,usa=cons[p.id]||0;
+      const queda=s-usa;                                            /* stock después del pedido en curso (incluye lo que consumen los combos) */
+      const cls=(np?'noprice ':'')+(queda<=0?'out':(queda<=(+p.minimo||0)?'low':''));   /* precio y stock se marcan por separado */
+      h+=`<button class="prod ${cls}${q?' sel':''}" style="--cat:${(CATS[p.categoria]||CATS.otro).c}" data-act="add" data-v="${esc(p.id)}" ${S.canWrite&&S.db?'':'disabled'}>
+        ${q?`<span class="q num">${q}</span>`:''}<span class="n">${esc(p.nombre)}</span>
+        <span class="pie">${precioHTML(p,np)}
+        <span class="stk num" aria-label="Stock disponible">${usa?`<s>${s}</s> → `:''}<b>${Math.max(queda,0)}</b><small>${queda<=0?'sin stock':'en stock'}</small></span></span></button>`}
+    h+=`</div>`}
   h+=`</div><aside class="ticket" id="ticket" aria-label="Pedido actual"><h3>Pedido</h3>`;
   const lines=Object.entries(S.ticket).filter(([,q])=>q>0);
   if(!lines.length)h+=`<p style="color:var(--muted);margin:6px 0 0">Tocá las bebidas para sumarlas.</p>`;
-  for(const [id,q] of lines){const p=prod(id);h+=`<div class="tl"><span class="nm">${esc(p.nombre)}${esCombo(p)?`<small class="cmp">${esc(textoComp(p))}</small>`:''}</span><button data-act="minus" data-v="${esc(id)}" aria-label="Quitar uno">−</button><span class="num" style="width:24px;text-align:center">${q}</span><button data-act="add" data-v="${esc(id)}" aria-label="Sumar uno">+</button><span class="num" style="width:90px;text-align:right">${money(q*(+p.precio||0))}</span></div>`}
-  const tot=lines.reduce((s,[id,q])=>s+q*(+prod(id).precio||0),0);
-  h+=`<div class="total"><span class="label">Total</span><b class="num">${money(tot)}</b></div>
+  for(const [id,q] of lines){const p=prod(id);h+=`<div class="tl"><span class="nm">${esc(p.nombre)}${esCombo(p)?`<small class="cmp">${esc(textoComp(p))}</small>`:''}</span><button data-act="minus" data-v="${esc(id)}" aria-label="Quitar uno">−</button><span class="num" style="width:24px;text-align:center">${q}</span><button data-act="add" data-v="${esc(id)}" aria-label="Sumar uno">+</button><span class="num" style="width:90px;text-align:right">${money(q*precioVenta(p).precio)}</span></div>`}
+  const tot=lines.reduce((s,[id,q])=>s+q*precioVenta(prod(id)).precio,0);
+  const ahorro=lines.reduce((s,[id,q])=>{const v=precioVenta(prod(id));return s+q*(v.lista-v.precio)},0);
+  h+=`<div class="total"><span class="label">Total${ahorro?`<br><span class="hhsave">Happy Hour −${money(ahorro)}</span>`:''}</span><b class="num">${money(tot)}</b></div>
     <div class="label" style="margin-bottom:8px">Cobrar con</div>
     <div class="pays">${PAGOS.map(([k,n,c])=>`<button class="${c}" data-act="cobrar" data-v="${k}" ${lines.length?'':'disabled'}>${n}</button>`).join('')}</div>`;
   if(lines.length)h+=`<button class="btn ghost" data-act="limpiar" style="width:100%;margin-top:8px">Vaciar pedido</button>`;
@@ -774,6 +847,22 @@ function vAjustes(){
      <div class="row"><input type="password" inputmode="numeric" id="pinNuevo" value="${esc(S.pinNuevo)}" placeholder="4 números" maxlength="4" style="width:160px" ${dis}><button class="btn" data-act="guardarPin" ${dis}>${S.config.pinHash?'Cambiar PIN':'Activar PIN'}</button></div></div>
    </section>`;
   const nAl=urlsAlerta('x').length;
+  const hc=S.config.happy||{},hf=S.hhForm||(S.hhForm={activo:!!hc.activo,tipo:hc.tipo||'porcentaje',valor:hc.valor??'',desde:hc.desde||'23:00',hasta:hc.hasta||'02:00',aplica:hc.aplica||'todo'});
+  const hAhora=hhActiva();
+  h+=`<section><h2>Happy Hour</h2>
+   <p style="color:var(--muted);margin-top:-4px">Descuento automático por horario. Empieza y termina solo en todos los celulares, según la hora de cada uno.</p>
+   <div class="card hhcfg">
+     <label class="chk"><input type="checkbox" id="hhActivo" ${hf.activo?'checked':''} ${dis}> Activar Happy Hour</label>
+     <div class="hhgrid">
+       <label for="hhTipo"><div class="label">Descuento</div><select class="f" id="hhTipo" ${dis}><option value="porcentaje"${hf.tipo==='porcentaje'?' selected':''}>Porcentaje (%)</option><option value="monto"${hf.tipo==='monto'?' selected':''}>Monto fijo ($)</option></select></label>
+       <label for="hhValor"><div class="label">${hf.tipo==='monto'?'Monto por unidad ($)':'Porcentaje (%)'}</div><input type="number" id="hhValor" min="1" step="${hf.tipo==='monto'?100:1}" value="${esc(hf.valor)}" placeholder="${hf.tipo==='monto'?'5000':'20'}" ${dis}></label>
+       <label for="hhDesde"><div class="label">Desde</div><input type="time" id="hhDesde" value="${esc(hf.desde)}" ${dis}></label>
+       <label for="hhHasta"><div class="label">Hasta (finaliza)</div><input type="time" id="hhHasta" value="${esc(hf.hasta)}" ${dis}></label>
+       <label for="hhAplica"><div class="label">Se aplica a</div><select class="f" id="hhAplica" ${dis}><option value="todo"${hf.aplica!=='combos'?' selected':''}>Combos y bebidas</option><option value="combos"${hf.aplica==='combos'?' selected':''}>Solo combos</option></select></label>
+     </div>
+     <div class="row"><button class="btn pri" data-act="guardarHH" ${dis}>Guardar Happy Hour</button>
+       ${hAhora?`<span class="pill ok">Corriendo ahora · ${esc(textoHH(hAhora))} hasta las ${esc(hAhora.hasta)}</span>`:hc.activo&&+hc.valor>0?`<span class="pill">Programado ${esc(hc.desde)} → ${esc(hc.hasta)}</span>`:'<span class="pill">Apagado</span>'}</div>
+   </div></section>`;
   h+=`<section><h2>Alertas automáticas</h2>
    <p style="color:var(--muted);margin-top:-4px">Se mandan solas, sin que nadie toque nada: cuando un cajero inicia sesión y cuando alguien pide eliminar algo.</p>
    <div class="row">${nAl?`<span class="pill ok">Activas · ${ALERTAS.proveedor==='telegram'?'Telegram':'CallMeBot'} · ${nAl} destinatario${nAl>1?'s':''}</span>`:'<span class="pill warn">Sin configurar: completá ALERTAS en el código (index.html)</span>'}
@@ -832,9 +921,10 @@ const ACT={
   cobrar:async v=>{
     if(!S.db||!evId()){toast('Elegí un evento en Ajustes.',true);return}
     const lineas=Object.entries(S.ticket).filter(([,q])=>q>0).map(([p,q])=>{const x=prod(p);
-      if(!esCombo(x))return {p,q,precio:+x.precio||0,costo:+x.costo||0};
+      const v=precioVenta(x),hh=v.hh?{lista:v.lista,hh:true}:{};      /* Happy Hour: se guarda también el precio de lista */
+      if(!esCombo(x))return {p,q,precio:v.precio,costo:+x.costo||0,...hh};
       /* combo: se guarda la composición en la venta → el stock unificado descuenta cada individual (ej: 1 Absolut + 3 Speed) */
-      return {p,q,precio:+x.precio||0,costo:costoCombo(x),comp:compDe(x).map(c=>({p:c.p,q:+c.q}))}});
+      return {p,q,precio:v.precio,costo:costoCombo(x),comp:compDe(x).map(c=>({p:c.p,q:+c.q})),...hh}});
     if(!lineas.length)return;
     const cs=cajSesionValida();const caj=cs&&S.cajeros.find(c=>c.id===cs.id);
     if(!caj)return toast('Iniciá sesión de cajero para cobrar.',true);
@@ -986,6 +1076,15 @@ const ACT={
     w(()=>S.db.doc('cajeros/'+v).update(cambios))},
   cajSalir:()=>{if(Object.keys(S.ticket).length)return toast('Tenés un pedido sin cobrar. Cobralo o pedí autorización para vaciarlo.',true);
     cerrarCajSesion(true);toast('Sesión cerrada')},
+  guardarHH:()=>{const f=S.hhForm||{};const valor=+f.valor;
+    if(f.activo){
+      if(!(valor>0))return toast('Poné el valor del descuento.',true);
+      if(f.tipo==='porcentaje'&&valor>90)return toast('El porcentaje tiene que ser de 1 a 90.',true);
+      if(!f.desde||!f.hasta||f.desde===f.hasta)return toast('Elegí un horario de inicio y de fin distintos.',true)}
+    const happy={activo:!!f.activo,tipo:f.tipo==='monto'?'monto':'porcentaje',valor:valor>0?valor:0,desde:f.desde||'23:00',hasta:f.hasta||'02:00',aplica:f.aplica==='combos'?'combos':'todo'};
+    S.config={...S.config,happy};S.hhForm=null;S.hhDirty=false;hhEstado=!!hhActiva();
+    toast(happy.activo?`Happy Hour guardado: ${textoHH(happy)} de ${happy.desde} a ${happy.hasta}`:'Happy Hour apagado');
+    w(()=>S.db.doc('config/main').set({happy},{merge:true}))},
   probarAlerta:async()=>{if(!urlsAlerta('x').length)return toast('Primero completá ALERTAS en el código con CallMeBot o Telegram.',true);
     const ok=await enviarAlertaAutomatica('Prueba de alertas By Elites: si te llegó este mensaje, está todo bien configurado.');
     toast(ok?'Alerta de prueba enviada. Revisá tu celular.':'Sin conexión: la alerta se va a mandar cuando vuelva la señal.',!ok)},
@@ -1176,6 +1275,7 @@ document.addEventListener('input',e=>{const el=e.target;
   else if(el.id==='nuevoCajRol')S.cajNuevo.rol=el.value;
   else if(el.dataset.bn)S.barEd[el.dataset.bn]=el.value;
   else if(el.id==='barNuevaNombre')S.barNueva=el.value;
+  else if(/^hh(Valor|Desde|Hasta)$/.test(el.id)&&S.hhForm&&(S.hhDirty=true))S.hhForm[{hhValor:'valor',hhDesde:'desde',hhHasta:'hasta'}[el.id]]=el.value;
   else if(el.id==='authPin')S.authPin=el.value;
 
   else if(el.id==='proveedor')S.proveedor=el.value;
@@ -1189,6 +1289,9 @@ document.addEventListener('input',e=>{const el=e.target;
 document.addEventListener('change',e=>{const el=e.target;
   if(el.id==='barraSel'){ACT.setBarra(el.value);el.blur();render();return}                /* barra de trabajo: cajero o encargado */
   if(rolActual()!=='encargado')return;         /* evento, productos y barras: solo encargado */
+  if(el.id==='hhActivo'||el.id==='hhTipo'||el.id==='hhAplica'){if(!S.hhForm)return;
+    S.hhDirty=true;if(el.id==='hhActivo')S.hhForm.activo=el.checked;else S.hhForm[el.id==='hhTipo'?'tipo':'aplica']=el.value;
+    if(el.id==='hhTipo'){el.blur();render()}return}
   if(el.id==='comBarraSel'){S.comBarra=el.value;el.blur();render();return}
   if(el.id==='movBarraSel'){ACT.movBarra(el.value);el.blur();render();return}
   if(el.id==='cierreBarraSel'){ACT.cierreBarra(el.value);el.blur();render();return}
@@ -1221,7 +1324,7 @@ async function exportar(){
     const fh=t=>t?new Date(t).toLocaleString('es-AR'):'';
     const ventas=[];const otros=[];const resumen={};
     for(const m of [...S.movs].sort((a,b)=>(a.at||0)-(b.at||0))){
-      if(m.tipo==='venta')for(const x of m.lineas||[]){ventas.push({'Fecha y hora':fh(m.at),'Lado':barraNom(m.barra),'Pedido':m.numero||'','Cajero':m.quien||'','Producto':prod(x.p).nombre,'Combo (contiene)':Array.isArray(x.comp)?x.comp.map(c=>c.q+' '+prod(c.p).nombre).join(' + '):'','Cantidad':x.q,'Precio':x.precio,'Subtotal':x.q*x.precio,'Costo':x.q*x.costo,'Medio de pago':nombrePago(m.pago),'Efectivo':m.pago==='efectivo'?x.q*x.precio:0,'Mercado Pago':m.pago==='mercadopago'?x.q*x.precio:0,'Tarjeta':m.pago==='tarjeta'?x.q*x.precio:0,'Entregado':m.entregado===false?'No':'Sí','Entregado por':m.entregadoPor||''});
+      if(m.tipo==='venta')for(const x of m.lineas||[]){ventas.push({'Fecha y hora':fh(m.at),'Lado':barraNom(m.barra),'Pedido':m.numero||'','Cajero':m.quien||'','Producto':prod(x.p).nombre,'Combo (contiene)':Array.isArray(x.comp)?x.comp.map(c=>c.q+' '+prod(c.p).nombre).join(' + '):'','Cantidad':x.q,'Precio lista':x.lista||x.precio,'Happy Hour':x.hh?'Sí':'No','Precio':x.precio,'Subtotal':x.q*x.precio,'Costo':x.q*x.costo,'Medio de pago':nombrePago(m.pago),'Efectivo':m.pago==='efectivo'?x.q*x.precio:0,'Mercado Pago':m.pago==='mercadopago'?x.q*x.precio:0,'Tarjeta':m.pago==='tarjeta'?x.q*x.precio:0,'Entregado':m.entregado===false?'No':'Sí','Entregado por':m.entregadoPor||''});
         const r=resumen[x.p]||(resumen[x.p]={'Producto':prod(x.p).nombre,'Unidades':0,'Facturación':0,'Costo':0});r.Unidades+=x.q;r['Facturación']+=x.q*x.precio;r.Costo+=x.q*x.costo}
       else if(m.tipo==='anulacion')otros.push({'Fecha y hora':fh(m.at),'Tipo':TIPOS.anulacion,'Motivo':m.detalle||'','Lado / proveedor':m.barra||'','Producto':'','Cantidad':'','Quién':m.quien||''});
       else for(const x of m.lineas||[])otros.push({'Fecha y hora':fh(m.at),'Tipo':TIPOS[m.tipo]||m.tipo,'Motivo':m.motivo||'','Lado / proveedor':m.tipo==='compra'?(m.proveedor||''):barraNom(m.barra),'Producto':prod(x.p).nombre,'Cantidad':x.q,'Quién':m.quien||''})}
@@ -1369,7 +1472,7 @@ function cambiarEvento(id,nombre){
   setTimeout(()=>{if(!S.cfgOk){S.cfgOk=true;sched()}},6000);   /* primera vez sin conexión: no quedar trabado en "Cargando" */
   db.doc('config/main').onSnapshot(s=>{
     if(!s.exists&&s.metadata.fromCache)return;     /* caché vacía al arrancar: esperar la respuesta real, no borrar el PIN guardado */
-    S.config=s.exists?{...s.data()}:{};S.cfgOk=true;
+    S.config=s.exists?{...s.data()}:{};S.cfgOk=true;if(!S.hhDirty)S.hhForm=null;   /* el formulario de Happy Hour toma lo guardado */
     ls('pinHash',S.config.pinHash||'');   /* copia local: aunque abra sin internet, arranca como Cajero */
     const ev=S.config.evento||'';if(ev!==evKey){S.config.evento=evKey;aplicarEvento(ev)}   /* otro celular cambió el evento */
     sched()},err);
