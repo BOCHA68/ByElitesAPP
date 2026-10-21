@@ -1,7 +1,6 @@
 <!doctype html>
 <html lang="es">
 <head>
-  <link rel="icon" type="image/png" href="icon-192.png">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>By Elites</title>
@@ -145,7 +144,7 @@ td input.wide{width:160px;text-align:left}
 .login h2{margin:0}
 .login .seg{display:grid;grid-template-columns:repeat(3,1fr)}
 .login .seg button{border-radius:10px;padding:12px 6px;font-size:14px}
-.login input{font-size:28px;letter-spacing:.3em;text-align:center;padding:12px;width:100%}
+.login input{font-size:22px;letter-spacing:.15em;text-align:center;padding:9px 10px;width:100%}
 .login .btn{padding:14px;font-size:17px}
 .login p{margin:0;color:var(--muted);font-size:14px}
 .modal-bg{position:fixed;inset:0;background:rgb(0 0 0 / .6);z-index:30}
@@ -198,8 +197,8 @@ td input.wide{width:160px;text-align:left}
 /* ================= Nightclub kiosk ================= */
 body{background:radial-gradient(1200px 600px at 85% -10%,rgb(180 108 255 / .14),transparent 60%),radial-gradient(900px 500px at -10% 110%,rgb(47 227 234 / .08),transparent 60%),var(--bg);background-attachment:fixed}
 header{background:rgb(7 7 13 / .82);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-bottom-color:rgb(255 255 255 / .06)}
-h1{font-size:26px;letter-spacing:.01em}
-h1 span{background:linear-gradient(90deg,var(--gold),#ff8ad8 60%,var(--accent));-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 0 10px rgb(246 196 83 / .35))}
+h1{font-size:26px;letter-spacing:.01em;color:#fff}
+h1 span{background:linear-gradient(90deg,#ffcd6b 0%,#ffb08a 28%,#ff96aa 52%,#e08fd6 76%,#c489ff 100%);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 0 10px rgb(255 150 170 / .35))}
 nav button[aria-current="page"]{color:#fff;border-color:var(--accent);text-shadow:0 0 12px color-mix(in srgb,var(--accent) 70%,transparent);box-shadow:0 6px 14px -8px var(--accent)}
 .btn{border-radius:12px;transition:transform .08s,box-shadow .15s,background .15s}
 .btn:active{transform:scale(.97)}
@@ -311,7 +310,7 @@ input:focus,select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 
 
 <header>
   <div class="top">
-    <h1>By <span>Elites</span></h1>
+    <h1>By<span>Elites</span></h1>
     <div class="row"><span id="net" class="pill" hidden></span><label class="evento" for="evSel">Evento <select id="evSel" aria-label="Evento actual"></select><button type="button" class="btn ghost evbtn" data-act="abrirEventos" aria-label="Gestionar eventos">Gestionar</button></label><span id="rolPill" class="pill" hidden></span><button class="btn ghost" id="rolBtn" style="padding:6px 10px;font-size:13px" hidden></button></div>
   </div>
   <nav id="nav">
@@ -1224,7 +1223,7 @@ function vAuth(){
    <p style="margin:0 0 14px;color:var(--muted)">${esc(a.barra)} · Cajero: ${esc(a.cajero)}</p>
    <form id="authForm" autocomplete="off" style="display:grid;gap:10px">
      <label for="authPin" class="label">PIN del encargado</label>
-     <input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="8" id="authPin" placeholder="••••" value="${esc(S.authPin)}" style="font-size:26px;letter-spacing:.3em;text-align:center;padding:10px" ${espera>0?'disabled':''}>
+     <input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="8" id="authPin" placeholder="••••" value="${esc(S.authPin)}" style="font-size:22px;letter-spacing:.15em;text-align:center;padding:9px 10px" ${espera>0?'disabled':''}>
      ${espera>0?`<p style="color:var(--bad);margin:0">Demasiados intentos. Esperá ${espera} segundos.</p>`:''}
      <div class="row"><button type="submit" class="btn pri" style="flex:1" ${espera>0?'disabled':''}>Autorizar y eliminar</button><button type="button" class="btn ghost" data-act="authCancel">Cancelar</button></div>
    </form>
