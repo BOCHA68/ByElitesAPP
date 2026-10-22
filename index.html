@@ -323,6 +323,43 @@ nav.subnav>button{white-space:normal;border-bottom-width:1px}
 .subnav button[aria-current="page"] small{color:#d6b4ff}
 #net::before{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;background:currentColor;margin-right:6px;vertical-align:1px;box-shadow:0 0 8px currentColor}
 @media (prefers-reduced-motion:reduce){.ped.nuevo{animation:none}.prod,.btn,.pays button{transition:none}}
+/* Botones de la lista "Para entregar" */
+.tlbtns{display:flex;gap:6px;flex:none}
+.tl button.reimp{width:auto;height:auto;padding:8px 10px;background:#2a2b33;color:#b9bac4;border-color:#3a3b45;font-weight:600;font-size:13px}
+.tl button.reimp:hover{color:#fff;border-color:#55566a}
+/* Ticket: oculto en pantalla */
+#ticket-impresion{display:none}
+/* ---------- Impresora térmica 80 mm ---------- */
+@media print{
+  @page{size:80mm auto;margin:0}
+  html,body{background:#fff !important;color:#000 !important;margin:0 !important;padding:0 !important;min-height:0 !important}
+  body *{display:none !important}
+  #ticket-impresion,#ticket-impresion *{display:block !important}
+  #ticket-impresion{width:100%;max-width:80mm;margin:0;padding:3mm 3mm 6mm;box-sizing:border-box;background:#fff !important;color:#000 !important;
+    font-family:monospace,sans-serif;font-size:13pt;line-height:1.3;font-weight:700;text-align:left;
+    -webkit-print-color-adjust:exact;print-color-adjust:exact}
+  #ticket-impresion *{color:#000 !important;background:transparent !important;text-shadow:none !important;box-shadow:none !important;opacity:1 !important;filter:none !important}
+  /* la tabla recupera su comportamiento de tabla (el bloque de arriba fuerza block en todo) */
+  #ticket-impresion table.tk-tabla{display:table !important;width:100%;border-collapse:collapse;margin:2mm 0;table-layout:fixed}
+  #ticket-impresion table.tk-tabla thead{display:table-header-group !important}
+  #ticket-impresion table.tk-tabla tbody{display:table-row-group !important}
+  #ticket-impresion table.tk-tabla tr{display:table-row !important}
+  #ticket-impresion table.tk-tabla th,#ticket-impresion table.tk-tabla td{display:table-cell !important;padding:1mm 0;vertical-align:top;font-size:12pt;word-wrap:break-word;overflow-wrap:anywhere}
+  #ticket-impresion table.tk-tabla th{border-bottom:2px solid #000;text-align:left;font-size:10pt;text-transform:uppercase}
+  #ticket-impresion .tk-c-cant{width:16%;text-align:left !important;padding-right:1.5mm !important}
+  #ticket-impresion .tk-c-det{text-align:left !important;padding-right:2mm !important;white-space:normal !important;word-break:normal}
+  #ticket-impresion .tk-c-sub{width:35%;text-align:right !important;white-space:nowrap}
+  #ticket-impresion table.tk-tabla tbody tr+tr td{border-top:1px dashed #000}
+  #ticket-impresion .tk-marca{text-align:center;font-size:24pt;font-weight:900;letter-spacing:.12em;margin:0 0 1mm}
+  #ticket-impresion .tk-titulo{text-align:center;font-size:14pt;font-weight:900;letter-spacing:.06em;border-top:2px solid #000;border-bottom:2px solid #000;padding:1mm 0;margin:1mm 0 2mm}
+  #ticket-impresion .tk-numero{text-align:center;font-size:30pt;font-weight:900;margin:1mm 0 2mm;letter-spacing:.02em}
+  #ticket-impresion .tk-dato{font-size:12pt;margin:0}
+  #ticket-impresion .tk-sep{border-top:2px dashed #000;margin:2mm 0;height:0}
+  #ticket-impresion .tk-total{display:flex !important;justify-content:space-between;align-items:baseline;font-size:18pt;font-weight:900;border-top:3px solid #000;padding-top:2mm;margin-top:1mm}
+  #ticket-impresion .tk-total span{display:inline !important}
+  #ticket-impresion .tk-hh{display:inline !important;font-size:10pt}
+  #ticket-impresion .tk-pie{text-align:center;font-size:11pt;margin-top:3mm}
+}
 </style>
 </head>
 <body>
@@ -369,7 +406,7 @@ const SUB_AJUSTES=[['stock','Stock y Productos','Productos, combos y precios'],[
 const NOMBRE_ROL={encargado:'Encargado',cajero:'Cajero',bartender:'Bartender'};
 const ROLES_PERSONAL={cajero:'Cajero',bartender:'Bartender'};
 const ACT_BARTENDER=new Set(['entregado','cajSalir','abrirLogin','cerrarLogin','entrar','authCancel']);   /* el bartender solo marca comandas entregadas */
-const ACT_CAJERO=new Set(['add','minus','limpiar','cobrar','entregado','deshacer','abrirLogin','cerrarLogin','entrar','authCancel','cajSalir']);
+const ACT_CAJERO=new Set(['add','minus','limpiar','cobrar','entregado','reimprimir','deshacer','abrirLogin','cerrarLogin','entrar','authCancel','cajSalir']);
 function leerCajSesion(){try{return JSON.parse(ls('cajSesion')||'null')}catch(e){return null}}
 function leerSesion(){try{return JSON.parse(ls('sesion')||'null')}catch(e){return null}}
 function guardarSesion(s){S.sesion=s;ls('sesion',s?JSON.stringify(s):'')}
@@ -668,7 +705,7 @@ function vVender(){
   const pend=S.movs.filter(m=>m.tipo==='venta'&&m.barra===S.barra&&m.entregado===false).sort((a,b)=>(a.at||0)-(b.at||0));
   h+=`<h3 style="margin-top:18px">Para entregar${pend.length?` · ${pend.length}`:''}</h3>`;
   if(!pend.length)h+=`<p style="color:var(--muted);margin:0;font-size:14px">Sin pedidos pendientes. Cuando cobrás, el pedido aparece acá hasta que lo marques entregado.</p>`;
-  for(const m of pend.slice(0,10))h+=`<div class="tl"><span class="nm"><b>${esc(m.numero||'')}</b> <span style="color:var(--muted)">${hora(m.at)}</span><br><span style="font-size:14px">${(m.lineas||[]).map(x=>esc(x.q+' '+prod(x.p).nombre)).join(', ')}</span></span><button class="btn" style="width:auto;height:auto;padding:8px 10px" data-act="entregado" data-v="${esc(m.id)}">Entregado</button></div>`;
+  for(const m of pend.slice(0,10))h+=`<div class="tl"><span class="nm"><b>${esc(m.numero||'')}</b> <span style="color:var(--muted)">${hora(m.at)}</span><br><span style="font-size:14px">${(m.lineas||[]).map(x=>esc(x.q+' '+prod(x.p).nombre)).join(', ')}</span></span><span class="tlbtns"><button class="btn reimp" data-act="reimprimir" data-v="${esc(m.id)}" title="Volver a imprimir el ticket">Reimprimir</button><button class="btn" style="width:auto;height:auto;padding:8px 10px" data-act="entregado" data-v="${esc(m.id)}">Entregado</button></span></div>`;
   h+=`</aside></div>`;
   /* celular: barra fija con el total para llegar al cobro sin buscarlo */
   if(lines.length)h+=`<button type="button" class="mbar" onclick="document.getElementById('ticket').scrollIntoView({behavior:'smooth',block:'start'})"><span>${lines.reduce((a,[,q])=>a+q,0)} ítems</span><b class="num">${money(tot)}</b><span>Cobrar ↓</span></button>`;
@@ -943,6 +980,30 @@ async function w(fn,ok){try{await fn();if(ok)toast(ok)}catch(e){console.error(e)
 const evId=()=>S.config.evento;
 function lineasDe(map){return Object.entries(map).map(([p,q])=>({p,q:Math.floor(+q||0)})).filter(x=>x.q>0)}
 
+/* ---------- Impresión de tickets (impresora térmica 80 mm) ---------- */
+function imprimirTicket(m){
+  if(!m||m.tipo!=='venta')return;
+  const box=document.getElementById('ticket-impresion');if(!box)return;
+  const ev=S.eventos.find(e=>e.id===m.evento);
+  const f=new Date(m.at||Date.now());
+  const fecha=f.toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit',year:'numeric'})+' '+f.toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'});
+  /* combos: solo el nombre del combo y la cantidad, nunca su composición */
+  const filas=(m.lineas||[]).map(x=>`<tr><td class="tk-c-cant">${esc(x.q)}</td><td class="tk-c-det">${esc(prod(x.p).nombre)}${x.hh?' <span class="tk-hh">(HH)</span>':''}</td><td class="tk-c-sub">${money(x.q*x.precio)}</td></tr>`).join('');
+  box.innerHTML=`<div class="tk-marca">BY ELITES</div>
+    <div class="tk-titulo">TICKET DE BEBIDA</div>
+    <div class="tk-numero">${esc(m.numero||'')}</div>
+    <div class="tk-dato">Evento: ${esc(ev?ev.nombre:(m.evento||''))}</div>
+    <div class="tk-dato">Barra: ${esc(barraNom(m.barra))}</div>
+    <div class="tk-dato">Fecha: ${esc(fecha)}</div>
+    <div class="tk-dato">Cajero: ${esc(m.quien||'')}</div>
+    <div class="tk-sep"></div>
+    <table class="tk-tabla"><thead><tr><th class="tk-c-cant">Cant</th><th class="tk-c-det">Detalle</th><th class="tk-c-sub">Subtotal</th></tr></thead><tbody>${filas}</tbody></table>
+    <div class="tk-total"><span>TOTAL</span><span>${money(m.total)}</span></div>
+    <div class="tk-dato">Pago: ${esc(nombrePago(m.pago))}</div>
+    <div class="tk-pie">Presentá este ticket en la barra<br>¡Gracias!</div>`;
+  try{window.print()}catch(e){console.warn('No se pudo imprimir',e);toast('No se pudo imprimir el ticket. Usá "Reimprimir".',true)}
+}
+
 const ACT={
   setBarra:v=>{S.barra=v;ls('barra',v);S.ticket={}},
   add:v=>{const p=prod(v);if(!(+p.precio>0)){toast(p.nombre+' no tiene precio.',true);return}
@@ -978,7 +1039,9 @@ const ACT={
       catch(e){idbOk=false;S.cola=[...S.cola.filter(x=>x.id!==id),item];recomputar()}  /* fallback: cola en memoria */
     }else{S.cola=[...S.cola.filter(x=>x.id!==id),item];recomputar()}
     render();setTimeout(sched,30500);
-    vaciarCola()},
+    vaciarCola();
+    imprimirTicket({id,...data})},   /* ticket térmico: la venta ya quedó guardada en el celular */
+  reimprimir:v=>{const m=S.movs.find(x=>x.id===v);if(m)imprimirTicket(m);else toast('No se encontró la venta.',true)},
   entregado:async v=>{const c=await colaLeer();const it=c.find(x=>x.id===v);
     const por=S.quien||(rolActual()==='encargado'?'Encargado':'');
     if(it){await colaGuardar({id:it.id,data:{...it.data,entregado:true,entregadoAt:Date.now(),entregadoPor:por}});await colaRefrescar();
@@ -1527,5 +1590,7 @@ if('serviceWorker' in navigator && (location.protocol==='https:'||location.hostn
   });
 }
 </script>
+<!-- Ticket para impresora térmica: oculto en pantalla, es lo único que se imprime -->
+<div id="ticket-impresion" aria-hidden="true"></div>
 </body>
 </html>
