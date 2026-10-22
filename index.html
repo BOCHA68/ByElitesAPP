@@ -332,10 +332,12 @@ nav.subnav>button{white-space:normal;border-bottom-width:1px}
 /* ---------- Impresora térmica 80 mm ---------- */
 @media print{
   @page{size:80mm auto;margin:0}
-  html,body{background:#fff !important;color:#000 !important;margin:0 !important;padding:0 !important;min-height:0 !important}
+  /* el papel mide solo lo que mide el ticket: nada de alturas mínimas, márgenes ni paddings heredados de la pantalla */
+  html,body{background:#fff !important;color:#000 !important;height:auto !important;min-height:0 !important;max-height:none !important;margin:0 !important;padding:0 !important;overflow:visible !important}
+  body::before,body::after{content:none !important;display:none !important}
   body *{display:none !important}
   #ticket-impresion,#ticket-impresion *{display:block !important}
-  #ticket-impresion{width:100%;max-width:80mm;margin:0;padding:3mm 3mm 6mm;box-sizing:border-box;background:#fff !important;color:#000 !important;
+  #ticket-impresion{width:100%;max-width:80mm;height:auto !important;min-height:0 !important;margin:0 !important;padding:2mm 3mm 0 !important;box-sizing:border-box;background:#fff !important;color:#000 !important;
     font-family:monospace,sans-serif;font-size:13pt;line-height:1.3;font-weight:700;text-align:left;
     -webkit-print-color-adjust:exact;print-color-adjust:exact}
   #ticket-impresion *{color:#000 !important;background:transparent !important;text-shadow:none !important;box-shadow:none !important;opacity:1 !important;filter:none !important}
@@ -358,7 +360,8 @@ nav.subnav>button{white-space:normal;border-bottom-width:1px}
   #ticket-impresion .tk-total{display:flex !important;justify-content:space-between;align-items:baseline;font-size:18pt;font-weight:900;border-top:3px solid #000;padding-top:2mm;margin-top:1mm}
   #ticket-impresion .tk-total span{display:inline !important}
   #ticket-impresion .tk-hh{display:inline !important;font-size:10pt}
-  #ticket-impresion .tk-pie{text-align:center;font-size:11pt;margin-top:3mm}
+  #ticket-impresion .tk-pie{text-align:center;font-size:11pt;margin:2mm 0 0 !important;padding:0 !important}
+  #ticket-impresion>:last-child{margin-bottom:0 !important;padding-bottom:0 !important}
 }
 </style>
 </head>
@@ -984,18 +987,11 @@ function lineasDe(map){return Object.entries(map).map(([p,q])=>({p,q:Math.floor(
 function imprimirTicket(m){
   if(!m||m.tipo!=='venta')return;
   const box=document.getElementById('ticket-impresion');if(!box)return;
-  const ev=S.eventos.find(e=>e.id===m.evento);
-  const f=new Date(m.at||Date.now());
-  const fecha=f.toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit',year:'numeric'})+' '+f.toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'});
   /* combos: solo el nombre del combo y la cantidad, nunca su composición */
   const filas=(m.lineas||[]).map(x=>`<tr><td class="tk-c-cant">${esc(x.q)}</td><td class="tk-c-det">${esc(prod(x.p).nombre)}${x.hh?' <span class="tk-hh">(HH)</span>':''}</td><td class="tk-c-sub">${money(x.q*x.precio)}</td></tr>`).join('');
   box.innerHTML=`<div class="tk-marca">BY ELITES</div>
     <div class="tk-titulo">TICKET DE BEBIDA</div>
     <div class="tk-numero">${esc(m.numero||'')}</div>
-    <div class="tk-dato">Evento: ${esc(ev?ev.nombre:(m.evento||''))}</div>
-    <div class="tk-dato">Barra: ${esc(barraNom(m.barra))}</div>
-    <div class="tk-dato">Fecha: ${esc(fecha)}</div>
-    <div class="tk-dato">Cajero: ${esc(m.quien||'')}</div>
     <div class="tk-sep"></div>
     <table class="tk-tabla"><thead><tr><th class="tk-c-cant">Cant</th><th class="tk-c-det">Detalle</th><th class="tk-c-sub">Subtotal</th></tr></thead><tbody>${filas}</tbody></table>
     <div class="tk-total"><span>TOTAL</span><span>${money(m.total)}</span></div>
